@@ -112,19 +112,8 @@ export class HomeComponent implements OnInit {
   ) { }
 
   async ngOnInit(): Promise<void> {    
-    if (this.backendService.isElectron) {
-      try {
-        await this.backendService.initializeDatabase();
-        await this.loadJobs();
-      } catch (error) {
-        console.error('Failed to initialize backend:', error);
-        // Load mock data as fallback
-        this.loadMockData();
-      }
-    } else {
-      // Load mock data for browser testing
-      this.loadMockData();
-    }
+      await this.backendService.initializeDatabase();
+      await this.loadJobs();
   }
 
   async loadJobs(): Promise<void> {
@@ -137,8 +126,6 @@ export class HomeComponent implements OnInit {
       this.refresh.next();
     } catch (error) {
       console.error('Error loading jobs:', error);
-      // Load mock data as fallback
-      this.loadMockData();
     } finally {
       this.loading = false;
       this.cdr.detectChanges();
@@ -147,7 +134,12 @@ export class HomeComponent implements OnInit {
 
   private jobToCalendarEvent(job: Job): CalendarEvent {
     const startDate = job.start_date ? new Date(job.start_date) : new Date();
-    const endDate = job.due_date ? new Date(job.due_date) : null;
+    let endDate: Date | null = null;
+    if(job.completed_date) {
+      endDate = new Date(job.completed_date);
+    } else {
+      endDate = job.due_date ? new Date(job.due_date) : null;
+    }
     
     return {
       id: job.id,
@@ -167,39 +159,6 @@ export class HomeComponent implements OnInit {
       },
       draggable: false
     };
-  }
-
-  private loadMockData(): void {
-    // Mock data for browser testing (excluding cancelled jobs)
-    const mockJobs: Partial<Job>[] = [
-      {
-        id: 1,
-        title: 'Website Design Project',
-        status: Status.IN_PROGRESS,
-        start_date: new Date(),
-        due_date: addDays(new Date(), 7),
-        client: { name: 'Acme Corp', id: 1 } as any
-      },
-      {
-        id: 2,
-        title: 'Logo Design',
-        status: Status.PENDING,
-        start_date: addDays(new Date(), 2),
-        due_date: addDays(new Date(), 5),
-        client: { name: 'Tech Startup', id: 2 } as any
-      },
-      {
-        id: 3,
-        title: 'Mobile App UI',
-        status: Status.COMPLETED,
-        start_date: subDays(new Date(), 5),
-        due_date: subDays(new Date(), 1),
-        client: { name: 'Mobile Co', id: 3 } as any
-      }
-    ];
-
-    this.events = mockJobs.map(job => this.jobToCalendarEvent(job as Job));
-    this.cdr.detectChanges();
   }
 
   dayClicked({ date, events }: { date: Date; events: CalendarEvent[] }): void {

@@ -71,6 +71,7 @@ class JobService {
                     client: updateData.client,
                     due_date: updateData.due_date,
                     start_date: updateData.start_date,
+                    completed_date: updateData.completed_date
                 })
                     .where("id = :id", { id })
                     .execute();
