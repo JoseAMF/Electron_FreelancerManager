@@ -257,6 +257,98 @@ export class FileUploaderComponent implements OnInit, OnDestroy, OnChanges {
     return imageExtensions.includes(extension);
   }
 
+  getFileIcon(fileName: string): string {
+    const extension = fileName.toLowerCase().substring(fileName.lastIndexOf('.'));
+    
+    switch (extension) {
+      case '.pdf':
+        return 'pi pi-file-pdf';
+      case '.doc':
+      case '.docx':
+        return 'pi pi-file-word';
+      case '.xls':
+      case '.xlsx':
+        return 'pi pi-file-excel';
+      case '.ppt':
+      case '.pptx':
+        return 'pi pi-desktop';
+      case '.txt':
+        return 'pi pi-file-edit';
+      case '.zip':
+      case '.rar':
+      case '.7z':
+        return 'pi pi-folder';
+      case '.mp4':
+      case '.avi':
+      case '.mkv':
+      case '.mov':
+        return 'pi pi-video';
+      case '.mp3':
+      case '.wav':
+      case '.flac':
+        return 'pi pi-volume-up';
+      case '.jpg':
+      case '.jpeg':
+      case '.png':
+      case '.gif':
+      case '.bmp':
+      case '.webp':
+        return 'pi pi-image'; // Fallback for images without preview
+      default:
+        return 'pi pi-file';
+    }
+  }
+
+  getFileIconColor(fileName: string): string {
+    const extension = fileName.toLowerCase().substring(fileName.lastIndexOf('.'));
+    
+    switch (extension) {
+      case '.pdf':
+        return '#dc3545'; // Red
+      case '.doc':
+      case '.docx':
+        return '#0d6efd'; // Blue
+      case '.xls':
+      case '.xlsx':
+        return '#198754'; // Green
+      case '.ppt':
+      case '.pptx':
+        return '#fd7e14'; // Orange
+      case '.txt':
+        return '#6c757d'; // Gray
+      case '.zip':
+      case '.rar':
+      case '.7z':
+        return '#ffc107'; // Yellow
+      case '.mp4':
+      case '.avi':
+      case '.mkv':
+      case '.mov':
+        return '#e83e8c'; // Pink
+      case '.mp3':
+      case '.wav':
+      case '.flac':
+        return '#20c997'; // Teal
+      case '.jpg':
+      case '.jpeg':
+      case '.png':
+      case '.gif':
+      case '.bmp':
+      case '.webp':
+        return '#0dcaf0'; // Cyan
+      default:
+        return '#6c757d'; // Gray
+    }
+  }
+
+  // Helper method to get preview URL for images
+  getImagePreviewUrl(fileItem: FileItem): string | null {
+    if (!this.isImageFile(fileItem.name)) {
+      return null;
+    }
+    return this.imagePreviewUrls[fileItem.name] || null;
+  }
+
   formatFileSize(bytes: number): string {
     if (bytes === 0) return '0 Bytes';
     const k = 1024;

@@ -4,6 +4,7 @@
 
 // Import Bootstrap CSS for layout and utility classes
 
+
 html, body {
   margin: 0;
   padding: 0;
@@ -53,3 +54,16 @@ html, body {
   font-size: 1.125rem;
 }
 
+p-fileupload.hide-progressbar .p-progressbar {
+  display: none !important;
+}
+
+p-fileupload.hide-progressbar .p-fileupload-content {
+  display: none !important;
+}
+
+p-fileupload.hide-progressbar .p-fileupload-header {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+}

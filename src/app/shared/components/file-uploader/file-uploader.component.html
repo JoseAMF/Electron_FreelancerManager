@@ -12,7 +12,9 @@
       chooseLabel="Choose Files"
       (onSelect)="onFileSelect($event)"
       (onRemove)="onFileRemove($event)"
-      (onClear)="onClear()">
+      (onClear)="onClear()"
+      class="hide-progressbar"
+      >
       
       <ng-template pTemplate="content">
         <div class="upload-area" *ngIf="getPendingFiles().length === 0">
@@ -21,6 +23,17 @@
           <small>Supported formats: {{ accept }}</small>
         </div>
       </ng-template>
+      
+      <!-- Empty template to remove file display -->
+      <ng-template pTemplate="file">
+        <!-- This intentionally empty to hide the default file list -->
+      </ng-template>
+      
+      <!-- Empty template to remove progress bar -->
+      <ng-template pTemplate="progressbar">
+        <!-- This intentionally empty to hide the progress bar -->
+      </ng-template>
+
     </p-fileUpload>
   </div>
 
@@ -40,7 +53,9 @@
               class="preview-thumbnail">
             <i 
               *ngIf="!isImageFile(file.name) || !imagePreviewUrls[file.name]"
-              class="pi pi-file file-icon"></i>
+               [style.color]="getFileIconColor(file.name)"
+               [ngClass]="getFileIcon(file.name)"
+         ></i>
           </div>
           
           <!-- File Info -->
