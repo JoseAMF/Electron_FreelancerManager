@@ -1,10 +1,10 @@
-import { Component, OnInit, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy, ChangeDetectorRef, Inject } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { ButtonModule } from 'primeng/button';
 import { BackendService } from '../core/services/backend/backend.service';
 import { JobService } from '../core/services/job.service';
-import { CommonModule } from '@angular/common';
+import { CommonModule, DOCUMENT } from '@angular/common';
 import { 
   CalendarEvent, 
   CalendarView, 
@@ -106,12 +106,10 @@ export class HomeComponent implements OnInit {
     private router: Router,
     private backendService: BackendService,
     private jobService: JobService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
   ) { }
 
-  async ngOnInit(): Promise<void> {
-    console.log('HomeComponent INIT ', this.backendService.isElectron);
-    
+  async ngOnInit(): Promise<void> {    
     if (this.backendService.isElectron) {
       try {
         await this.backendService.initializeDatabase();
