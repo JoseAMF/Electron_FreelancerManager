@@ -3,13 +3,14 @@ import { ElectronService } from './core/services';
 import { TranslateService } from '@ngx-translate/core';
 import { APP_CONFIG } from '../environments/environment';
 import { RouterOutlet } from '@angular/router';
+import { MenuComponent } from './shared/components/menu/menu.component';
 
 @Component({
     selector: 'app-root',
     templateUrl: './app.component.html',
     styleUrls: ['./app.component.scss'],
     standalone: true,
-    imports: [RouterOutlet]
+    imports: [RouterOutlet, MenuComponent]
 })
 export class AppComponent {
   constructor(

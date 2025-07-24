@@ -3,6 +3,7 @@ import { bootstrapApplication } from '@angular/platform-browser';
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { importProvidersFrom } from '@angular/core';
 import { provideRouter } from '@angular/router';
+import { providePrimeNG } from 'primeng/config';
 
 import { AppComponent } from './app/app.component';
 import { APP_CONFIG } from './environments/environment';
@@ -14,6 +15,10 @@ import { HttpClient } from '@angular/common/http';
 import { PageNotFoundComponent } from './app/shared/components';
 import { HomeComponent } from './app/home/home.component';
 import { DetailComponent } from './app/detail/detail.component';
+import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
+import Aura from '@primeng/themes/aura';
+import { ClientsComponent } from './app/clients/clients.component';
+import { JobsComponent } from './app/jobs/jobs.component';
 
 // AoT requires an exported function for factories
 const httpLoaderFactory = (http: HttpClient): TranslateHttpLoader => new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -24,6 +29,12 @@ if (APP_CONFIG.production) {
 
 bootstrapApplication(AppComponent, {
   providers: [
+    providePrimeNG({
+       theme: {
+                preset: Aura
+            }
+    }),
+    provideAnimationsAsync(),
     provideHttpClient(withInterceptorsFromDi()),
     provideRouter([
       {
@@ -36,8 +47,12 @@ bootstrapApplication(AppComponent, {
         component: HomeComponent
       },
       {
-        path: 'detail',
-        component: DetailComponent
+        path: 'jobs',
+        component: JobsComponent
+      },
+      {
+        path: 'clients',
+        component: ClientsComponent
       },
       {
         path: '**',

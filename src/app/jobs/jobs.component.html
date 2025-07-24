@@ -1,0 +1,246 @@
+<div class="container">
+    <p-panel>
+        <ng-template pTemplate="header">
+            <div class="panel-header">
+                <span class="panel-title">Jobs</span>
+                <p-button 
+                    label="Add Job" 
+                    icon="pi pi-plus" 
+                    size="small"
+                    (click)="addJob()">
+                </p-button>
+            </div>
+        </ng-template>
+        
+        <p-table [value]="jobs" [paginator]="true" [rows]="10" [responsiveLayout]="'scroll'">
+            <ng-template pTemplate="header">
+                <tr>
+                    <th pSortableColumn="title">Title <p-sortIcon field="title" /></th>
+                    <th>Client</th>
+                    <th pSortableColumn="status">Status <p-sortIcon field="status" /></th>
+                    <th pSortableColumn="price">Price <p-sortIcon field="price" /></th>
+                    <th pSortableColumn="due_date">Due Date <p-sortIcon field="due_date" /></th>
+                    <th pSortableColumn="created_at">Created At <p-sortIcon field="created_at" /></th>
+                    <th>Actions</th>
+                </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-job>
+                <tr>
+                    <td>{{ job.title }}</td>
+                    <td>{{ getClientName(job.client_id || job.client?.id) }}</td>
+                    <td>
+                        <p-tag 
+                            [value]="job.status" 
+                            [severity]="getStatusSeverity(job.status)">
+                        </p-tag>
+                    </td>
+                    <td>${{ job.price | number:'1.2-2' }}</td>
+                    <td>{{ job.due_date | date: 'dd/MMM/YY' }}</td>
+                    <td>{{ job.created_at | date: 'dd/MMM/YY hh:mm' }}</td>
+
+                    <td>
+                        <div class="action-buttons">
+                            <p-button 
+                                icon="pi pi-pencil" 
+                                [text]="true"
+                                severity="info"
+                                size="small"
+                                pTooltip="Edit Job"
+                                (click)="editJob(job)">
+                            </p-button>
+                            <p-button 
+                                icon="pi pi-trash" 
+                                [text]="true"
+                                severity="danger"
+                                size="small"
+                                pTooltip="Delete Job"
+                                (click)="deleteJob($event,job)">
+                            </p-button>
+                        </div>
+                    </td>
+                </tr>
+            </ng-template>
+        </p-table>
+    </p-panel>
+</div>
+
+<p-dialog 
+    [header]="getDialogTitle()" 
+    [(visible)]="displayJobDialog" 
+    [modal]="true" 
+    [style]="{ width: '60vw' }"
+    [closable]="false"
+    [dismissableMask]="true">
+    
+    <form [formGroup]="jobForm" class="dialog-content">
+        <!-- Title Field -->
+        <div class="field-row full-width">
+            <p-inputgroup>
+                <p-inputgroup-addon>
+                    <i class="pi pi-briefcase"></i>
+                </p-inputgroup-addon>
+                <p-iftalabel>
+                    <input 
+                        pInputText 
+                        inputId="title" 
+                        formControlName="title"
+                        [class.ng-invalid]="isFieldInvalid('title')"
+                    />
+                    <label for="title">Job Title *</label>
+                </p-iftalabel>
+            </p-inputgroup>
+            <small class="error-message" *ngIf="isFieldInvalid('title')">
+                {{ getFieldError('title') }}
+            </small>
+        </div>
+
+        <!-- Client and Status Fields -->
+        <div class="field-row half-width">
+            <div class="field-wrapper">
+                <p-inputgroup>
+                    <p-inputgroup-addon>
+                        <i class="pi pi-user"></i>
+                    </p-inputgroup-addon>
+                    <p-iftalabel>
+                        <p-autocomplete 
+                            inputId="client"
+                            formControlName="client"
+                            [suggestions]="filteredClients"
+                            (completeMethod)="searchClients($event)"
+                            field="name"
+                            placeholder="Search clients..."
+                            [class.ng-invalid]="isFieldInvalid('client')"
+                            [style]="{ width: '100%' }">
+                            <ng-template let-client pTemplate="item">
+                                <div class="client-option">
+                                    <div class="client-name">{{ client.name }}</div>
+                                    <div class="client-email" *ngIf="client.email">{{ client.email }}</div>
+                                </div>
+                            </ng-template>
+                        </p-autocomplete>
+                        <label for="client">Client *</label>
+                    </p-iftalabel>
+                </p-inputgroup>
+                <small class="error-message" *ngIf="isFieldInvalid('client')">
+                    {{ getFieldError('client') }}
+                </small>
+            </div>
+
+            <div class="field-wrapper">
+                <p-inputgroup>
+                    <p-inputgroup-addon>
+                        <i class="pi pi-flag"></i>
+                    </p-inputgroup-addon>
+                    <p-iftalabel>
+                        <p-dropdown 
+                            inputId="status"
+                            formControlName="status"
+                            [options]="statusOptions"
+                            optionLabel="label"
+                            optionValue="value"
+                            [class.ng-invalid]="isFieldInvalid('status')"
+                            [style]="{ width: '100%' }">
+                        </p-dropdown>
+                        <label for="status">Status *</label>
+                    </p-iftalabel>
+                </p-inputgroup>
+                <small class="error-message" *ngIf="isFieldInvalid('status')">
+                    {{ getFieldError('status') }}
+                </small>
+            </div>
+        </div>
+
+        <!-- Price and Due Date Fields -->
+        <div class="field-row half-width">
+            <div class="field-wrapper">
+                <p-inputgroup>
+                    <p-inputgroup-addon>
+                        <i class="pi pi-dollar"></i>
+                    </p-inputgroup-addon>
+                    <p-iftalabel>
+                        <p-inputnumber 
+                            inputId="price"
+                            formControlName="price"
+                            mode="currency" 
+                            currency="USD" 
+                            locale="en-US"
+                            [class.ng-invalid]="isFieldInvalid('price')"
+                            [style]="{ width: '100%' }">
+                        </p-inputnumber>
+                        <label for="price">Price *</label>
+                    </p-iftalabel>
+                </p-inputgroup>
+                <small class="error-message" *ngIf="isFieldInvalid('price')">
+                    {{ getFieldError('price') }}
+                </small>
+            </div>
+
+            <div class="field-wrapper">
+                <p-inputgroup>
+                    <p-inputgroup-addon>
+                        <i class="pi pi-calendar"></i>
+                    </p-inputgroup-addon>
+                    <p-iftalabel>
+                        <p-datepicker 
+                            inputId="due_date"
+                            formControlName="due_date"
+                            dateFormat="mm/dd/yy"
+                            [class.ng-invalid]="isFieldInvalid('due_date')"
+                            [style]="{ width: '100%' }">
+                        </p-datepicker>
+                        <label for="due_date">Due Date</label>
+                    </p-iftalabel>
+                </p-inputgroup>
+                <small class="error-message" *ngIf="isFieldInvalid('due_date')">
+                    {{ getFieldError('due_date') }}
+                </small>
+            </div>
+        </div>
+
+        <!-- Description Field -->
+        <div class="field-row full-width">
+            <p-inputgroup>
+                <p-inputgroup-addon>
+                    <i class="pi pi-file-edit"></i>
+                </p-inputgroup-addon>
+                <p-iftalabel>
+                    <textarea 
+                        pInputTextarea
+                        inputId="description" 
+                        formControlName="description"
+                        rows="4"
+                        [style]="{ width: '100%' }">
+                    </textarea>
+                    <label for="description">Description</label>
+                </p-iftalabel>
+            </p-inputgroup>
+        </div>
+
+        <!-- File Upload Section -->
+        <div class="field-row full-width">
+            <app-file-uploader
+              [readonly]="false"
+              [multiple]="true"
+              [initialFiles]="currentJobAttachments"
+              (filesChanged)="onFilesChanged($event)">
+            </app-file-uploader>
+        </div>
+    </form>
+
+    <ng-template pTemplate="footer">
+        <button pButton type="button" severity="secondary" label="Cancel" icon="pi pi-times" (click)="cancelAddJob()"></button>
+        <button 
+            pButton 
+            type="button" 
+            severity="primary" 
+            label="Save" 
+            icon="pi pi-check" 
+            [disabled]="jobForm.invalid"
+            (click)="saveNewJob($event)">
+        </button>
+    </ng-template>
+
+</p-dialog>
+
+<p-confirmdialog />
+<p-toast />

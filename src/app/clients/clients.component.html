@@ -1,0 +1,167 @@
+<div class="container">
+    <p-panel>
+        <ng-template pTemplate="header">
+            <div class="panel-header">
+                <span class="panel-title">Clients</span>
+                <p-button 
+                    label="Add Client" 
+                    icon="pi pi-plus" 
+                    size="small"
+                    (click)="addClient()">
+                </p-button>
+            </div>
+        </ng-template>
+        
+        <p-table [value]="clients" [paginator]="true" [rows]="10" [responsiveLayout]="'scroll'">
+            <ng-template pTemplate="header">
+                <tr>
+                    <th pSortableColumn="name">Name <p-sortIcon field="name" /></th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Discord</th>
+                    <th pSortableColumn="created_at">Created At <p-sortIcon field="created_at" /></th>
+                    <th>Actions</th>
+                </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-client>
+                <tr>
+                    <td>{{ client.name }}</td>
+                    <td>{{ client.email }}</td>
+                    <td>{{ client.phone || 'N/A' }}</td>
+                    <td>{{ client.discord || 'N/A' }}</td>
+                    <td>{{ client.created_at | date: 'dd/MMM/YY hh:mm' }}</td>
+
+                    <td>
+                        <div class="action-buttons">
+                            <p-button 
+                                icon="pi pi-pencil" 
+                                [text]="true"
+                                severity="info"
+                                size="small"
+                                pTooltip="Edit Client"
+                                (click)="editClient(client)">
+                            </p-button>
+                            <p-button 
+                                icon="pi pi-trash" 
+                                [text]="true"
+                                severity="danger"
+                                size="small"
+                                pTooltip="Delete Client"
+                                (click)="deleteClient($event,client)">
+                            </p-button>
+                        </div>
+                    </td>
+                </tr>
+            </ng-template>
+        </p-table>
+    </p-panel>
+</div>
+
+<p-dialog 
+    [header]="getDialogTitle()" 
+    [(visible)]="displayClientDialog" 
+    [modal]="true" 
+    [style]="{ width: '50vw' }"
+    [closable]="false"
+    [dismissableMask]="true">
+    
+    <form [formGroup]="clientForm" class="dialog-content">
+        <!-- Name Field -->
+        <div class="field-row full-width">
+            <p-inputgroup>
+                <p-inputgroup-addon>
+                    <i class="pi pi-user"></i>
+                </p-inputgroup-addon>
+                <p-floatlabel variant="in">
+                    <input 
+                        pInputText 
+                        id="name" 
+                        formControlName="name"
+                        [class.ng-invalid]="isFieldInvalid('name')"
+                    />
+                    <label for="name">Name *</label>
+                </p-floatlabel>
+            </p-inputgroup>
+            <small class="error-message" *ngIf="isFieldInvalid('name')">
+                {{ getFieldError('name') }}
+            </small>
+        </div>
+
+        <!-- Email Field -->
+        <div class="field-row full-width">
+            <p-inputgroup>
+                <p-inputgroup-addon>
+                    <i class="pi pi-envelope"></i>
+                </p-inputgroup-addon>
+                <p-floatlabel variant="in">
+                    <input 
+                        pInputText 
+                        id="email" 
+                        formControlName="email"
+                        [class.ng-invalid]="isFieldInvalid('email')"
+                    />
+                    <label for="email">Email *</label>
+                </p-floatlabel>
+            </p-inputgroup>
+            <small class="error-message" *ngIf="isFieldInvalid('email')">
+                {{ getFieldError('email') }}
+            </small>
+        </div>
+
+        <!-- Phone and Discord Fields -->
+        <div class="field-row half-width">
+            <div class="field-wrapper">
+                <p-inputgroup>
+                    <p-inputgroup-addon>
+                        <i class="pi pi-phone"></i>
+                    </p-inputgroup-addon>
+                    <p-floatlabel variant="in">
+                        <input 
+                            pInputText 
+                            id="phone" 
+                            formControlName="phone"
+                            [class.ng-invalid]="isFieldInvalid('phone')"
+                        />
+                        <label for="phone">Phone</label>
+                    </p-floatlabel>
+                </p-inputgroup>
+                <small class="error-message" *ngIf="isFieldInvalid('phone')">
+                    {{ getFieldError('phone') }}
+                </small>
+            </div>
+
+            <div class="field-wrapper">
+                <p-inputgroup>
+                    <p-inputgroup-addon>
+                        <i class="pi pi-discord"></i>
+                    </p-inputgroup-addon>
+                    <p-floatlabel variant="in">
+                        <input 
+                            pInputText 
+                            id="discord" 
+                            formControlName="discord"
+                        />
+                        <label for="discord">Discord</label>
+                    </p-floatlabel>
+                </p-inputgroup>
+            </div>
+        </div>
+    </form>
+
+    <ng-template pTemplate="footer">
+        <button pButton type="button" severity="secondary" label="Cancel" icon="pi pi-times" (click)="cancelAddClient()"></button>
+        <button 
+            pButton 
+            type="button" 
+            severity="primary" 
+            label="Save" 
+            icon="pi pi-check" 
+            [disabled]="clientForm.invalid"
+            (click)="saveNewClient($event)">
+        </button>
+    </ng-template>
+
+</p-dialog>
+
+<p-confirmdialog />
+<p-toast />

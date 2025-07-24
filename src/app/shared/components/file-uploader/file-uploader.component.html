@@ -1,0 +1,88 @@
+<div class="file-uploader-container">
+  <!-- File Upload Section -->
+  <div class="upload-section" *ngIf="!readonly">
+    <p-fileUpload 
+      mode="advanced" 
+      [multiple]="multiple"
+      [accept]="accept"
+      [maxFileSize]="maxFileSize"
+      [auto]="false"
+      [showUploadButton]="false"
+      [showCancelButton]="false"
+      chooseLabel="Choose Files"
+      (onSelect)="onFileSelect($event)"
+      (onRemove)="onFileRemove($event)"
+      (onClear)="onClear()">
+      
+      <ng-template pTemplate="content">
+        <div class="upload-area" *ngIf="getPendingFiles().length === 0">
+          <i class="pi pi-cloud-upload" style="font-size: 2rem; color: var(--p-text-muted-color, #6c757d);"></i>
+          <p>Drag and drop files here or click to browse</p>
+          <small>Supported formats: {{ accept }}</small>
+        </div>
+      </ng-template>
+    </p-fileUpload>
+  </div>
+
+  <!-- Files List -->
+  <div class="files-list" *ngIf="files.length > 0">
+    <h4>{{ readonly ? 'Attached Files' : 'Selected Files' }}</h4>
+    
+    <div class="file-items">
+      <div class="file-item" *ngFor="let file of files; trackBy: trackByFileName; let last = last">
+        <div class="file-row">
+          <!-- Image Preview or Icon -->
+          <div class="file-preview-small">
+            <img 
+              *ngIf="isImageFile(file.name) && imagePreviewUrls[file.name]"
+              [src]="imagePreviewUrls[file.name]" 
+              [alt]="file.name" 
+              class="preview-thumbnail">
+            <i 
+              *ngIf="!isImageFile(file.name) || !imagePreviewUrls[file.name]"
+              class="pi pi-file file-icon"></i>
+          </div>
+          
+          <!-- File Info -->
+          <div class="file-details">
+            <div class="file-name">{{ file.name }}</div>
+            <div class="file-size">{{ formatFileSize(file.size) }}</div>
+          </div>
+          
+          <!-- Status -->
+          <div class="file-status">
+            <span *ngIf="file.isUploaded" class="uploaded-badge">
+              <i class="pi pi-check"></i> Uploaded
+            </span>
+            <span *ngIf="!file.isUploaded" class="pending-badge">
+              <i class="pi pi-clock"></i> Pending
+            </span>
+          </div>
+          
+          <!-- Actions -->
+          <div class="file-actions" *ngIf="!readonly">
+            <button 
+              type="button"
+              pButton 
+              icon="pi pi-times" 
+              class="p-button-rounded p-button-text p-button-sm p-button-danger"
+              [pTooltip]="file.isUploaded ? 'Delete uploaded file' : 'Remove file'"
+              (click)="removeFile(file, $event)">
+            </button>
+          </div>
+        </div>
+        
+        <!-- Separator line (except for last item) -->
+        <div class="file-separator" *ngIf="!last"></div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Empty State -->
+  <div class="empty-state" *ngIf="files.length === 0 && readonly">
+    <i class="pi pi-file" style="font-size: 2rem; color: var(--p-text-muted-color, #6c757d);"></i>
+    <p>No files attached</p>
+  </div>
+</div>
+
+<p-confirmdialog />
