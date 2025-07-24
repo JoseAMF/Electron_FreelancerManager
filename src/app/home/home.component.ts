@@ -26,6 +26,7 @@ import { TagModule } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
 import { Status } from '../../../app/backend/entities/status.enum';
 import { Job } from '../../../app/backend/entities';
+import { DialogService } from '../core/dialog.service';
 
 const statusColors: { [key in Status]: any } = {
   [Status.PENDING]: {
@@ -106,6 +107,7 @@ export class HomeComponent implements OnInit {
     private router: Router,
     private backendService: BackendService,
     private jobService: JobService,
+    private dialogService: DialogService,
     private cdr: ChangeDetectorRef,
   ) { }
 
@@ -268,9 +270,10 @@ export class HomeComponent implements OnInit {
     await this.loadJobs();
   }
 
-  createNewJob(): void {
-    this.router.navigate(['/jobs'], { 
-      queryParams: { action: 'create' } 
-    });
+  async createNewJob(): Promise<void> {
+    const result = await this.dialogService.openJobDialog();
+    if (result.success) {
+      await this.loadJobs();
+    }
   }
 }

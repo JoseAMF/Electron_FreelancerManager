@@ -4,13 +4,14 @@ import { TranslateService } from '@ngx-translate/core';
 import { APP_CONFIG } from '../environments/environment';
 import { RouterOutlet } from '@angular/router';
 import { MenuComponent } from './shared/components/menu/menu.component';
+import { GlobalDialogsComponent } from './core/global-dialog/global-dialog.component';
 
 @Component({
     selector: 'app-root',
     templateUrl: './app.component.html',
     styleUrls: ['./app.component.scss'],
     standalone: true,
-    imports: [RouterOutlet, MenuComponent]
+    imports: [RouterOutlet, MenuComponent, GlobalDialogsComponent]
 })
 export class AppComponent {
   constructor(

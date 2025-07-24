@@ -1,0 +1,291 @@
+<!-- Client Dialog -->
+<p-dialog 
+  [header]="dialogState.config.title" 
+  [(visible)]="dialogState.visible"
+  [modal]="dialogState.config.modal"
+  [style]="{ width: dialogState.config.width }"
+  [closable]="dialogState.config.closable"
+  [dismissableMask]="dialogState.config.dismissableMask"
+  *ngIf="dialogState.type === 'client'">
+  
+  <form [formGroup]="clientForm" class="dialog-content">
+    <!-- Name Field -->
+    <div class="field-row full-width">
+      <p-inputgroup>
+        <p-inputgroup-addon>
+          <i class="pi pi-user"></i>
+        </p-inputgroup-addon>
+        <p-floatlabel variant="in">
+          <input 
+            pInputText 
+            id="name" 
+            formControlName="name"
+            [class.ng-invalid]="isFieldInvalid(clientForm, 'name')"
+          />
+          <label for="name">Name *</label>
+        </p-floatlabel>
+      </p-inputgroup>
+      <small class="error-message" *ngIf="isFieldInvalid(clientForm, 'name')">
+        {{ getFieldError(clientForm, 'name') }}
+      </small>
+    </div>
+
+    <!-- Email Field -->
+    <div class="field-row full-width">
+      <p-inputgroup>
+        <p-inputgroup-addon>
+          <i class="pi pi-envelope"></i>
+        </p-inputgroup-addon>
+        <p-floatlabel variant="in">
+          <input 
+            pInputText 
+            id="email" 
+            formControlName="email"
+            [class.ng-invalid]="isFieldInvalid(clientForm, 'email')"
+          />
+          <label for="email">Email *</label>
+        </p-floatlabel>
+      </p-inputgroup>
+      <small class="error-message" *ngIf="isFieldInvalid(clientForm, 'email')">
+        {{ getFieldError(clientForm, 'email') }}
+      </small>
+    </div>
+
+    <!-- Phone and Discord Fields -->
+    <div class="field-row half-width">
+      <div class="field-wrapper">
+        <p-inputgroup>
+          <p-inputgroup-addon>
+            <i class="pi pi-phone"></i>
+          </p-inputgroup-addon>
+          <p-floatlabel variant="in">
+            <input 
+              pInputText 
+              id="phone" 
+              formControlName="phone"
+              [class.ng-invalid]="isFieldInvalid(clientForm, 'phone')"
+            />
+            <label for="phone">Phone</label>
+          </p-floatlabel>
+        </p-inputgroup>
+        <small class="error-message" *ngIf="isFieldInvalid(clientForm, 'phone')">
+          {{ getFieldError(clientForm, 'phone') }}
+        </small>
+      </div>
+
+      <div class="field-wrapper">
+        <p-inputgroup>
+          <p-inputgroup-addon>
+            <i class="pi pi-discord"></i>
+          </p-inputgroup-addon>
+          <p-floatlabel variant="in">
+            <input 
+              pInputText 
+              id="discord" 
+              formControlName="discord"
+            />
+            <label for="discord">Discord</label>
+          </p-floatlabel>
+        </p-inputgroup>
+      </div>
+    </div>
+  </form>
+
+  <ng-template pTemplate="footer">
+    <button pButton type="button" severity="secondary" label="Cancel" icon="pi pi-times" (click)="cancelDialog()"></button>
+    <button 
+      pButton 
+      type="button" 
+      severity="primary" 
+      label="Save" 
+      icon="pi pi-check" 
+      [disabled]="clientForm.invalid"
+      (click)="saveClient($event)">
+    </button>
+  </ng-template>
+</p-dialog>
+
+<!-- Job Dialog -->
+<p-dialog 
+  [header]="dialogState.config.title" 
+  [(visible)]="dialogState.visible"
+  [modal]="dialogState.config.modal"
+  [style]="{ width: dialogState.config.width }"
+  [closable]="dialogState.config.closable"
+  [dismissableMask]="dialogState.config.dismissableMask"
+  *ngIf="dialogState.type === 'job'">
+  
+  <form [formGroup]="jobForm" class="dialog-content">
+    <!-- Title Field -->
+    <div class="field-row full-width">
+      <p-inputgroup>
+        <p-inputgroup-addon>
+          <i class="pi pi-briefcase"></i>
+        </p-inputgroup-addon>
+        <p-iftalabel>
+          <input 
+            pInputText 
+            inputId="title" 
+            formControlName="title"
+            [class.ng-invalid]="isFieldInvalid(jobForm, 'title')"
+          />
+          <label for="title">Job Title *</label>
+        </p-iftalabel>
+      </p-inputgroup>
+      <small class="error-message" *ngIf="isFieldInvalid(jobForm, 'title')">
+        {{ getFieldError(jobForm, 'title') }}
+      </small>
+    </div>
+
+    <!-- Client and Status Fields -->
+    <div class="field-row half-width">
+      <div class="field-wrapper">
+        <p-inputgroup>
+          <p-inputgroup-addon>
+            <i class="pi pi-user"></i>
+          </p-inputgroup-addon>
+          <div style="flex: 1; width: 100%;">
+            <p-iftalabel style="width: 100%; display: block;">
+              <p-autocomplete 
+                inputId="client"
+                formControlName="client"
+                [suggestions]="filteredClients"
+                (completeMethod)="searchClients($event)"
+                field="name"
+                placeholder="Search clients..."
+                [class.ng-invalid]="isFieldInvalid(jobForm, 'client')"
+                [style]="{ width: '100%' }">
+                <ng-template let-client pTemplate="item">
+                  <div class="client-option">
+                    <div class="client-name">{{ client.name }}</div>
+                    <div class="client-email" *ngIf="client.email">{{ client.email }}</div>
+                  </div>
+                </ng-template>
+              </p-autocomplete>
+              <label for="client">Client *</label>
+            </p-iftalabel>
+          </div>
+        </p-inputgroup>
+        <small class="error-message" *ngIf="isFieldInvalid(jobForm, 'client')">
+          {{ getFieldError(jobForm, 'client') }}
+        </small>
+      </div>
+
+      <div class="field-wrapper">
+        <p-inputgroup>
+          <p-inputgroup-addon>
+            <i class="pi pi-flag"></i>
+          </p-inputgroup-addon>
+          <p-iftalabel>
+            <p-dropdown 
+              inputId="status"
+              formControlName="status"
+              [options]="statusOptions"
+              optionLabel="label"
+              optionValue="value"
+              [class.ng-invalid]="isFieldInvalid(jobForm, 'status')"
+              [style]="{ width: '100%' }">
+            </p-dropdown>
+            <label for="status">Status *</label>
+          </p-iftalabel>
+        </p-inputgroup>
+        <small class="error-message" *ngIf="isFieldInvalid(jobForm, 'status')">
+          {{ getFieldError(jobForm, 'status') }}
+        </small>
+      </div>
+    </div>
+
+    <!-- Price and Due Date Fields -->
+    <div class="field-row half-width">
+      <div class="field-wrapper">
+        <p-inputgroup>
+          <p-inputgroup-addon>
+            <i class="pi pi-dollar"></i>
+          </p-inputgroup-addon>
+          <p-iftalabel>
+            <p-inputnumber 
+              inputId="price"
+              formControlName="price"
+              mode="currency" 
+              currency="USD" 
+              locale="en-US"
+              [class.ng-invalid]="isFieldInvalid(jobForm, 'price')"
+              [style]="{ width: '100%' }">
+            </p-inputnumber>
+            <label for="price">Price *</label>
+          </p-iftalabel>
+        </p-inputgroup>
+        <small class="error-message" *ngIf="isFieldInvalid(jobForm, 'price')">
+          {{ getFieldError(jobForm, 'price') }}
+        </small>
+      </div>
+
+      <div class="field-wrapper">
+        <p-inputgroup>
+          <p-inputgroup-addon>
+            <i class="pi pi-calendar"></i>
+          </p-inputgroup-addon>
+          <p-iftalabel style="width: 100%; display: block;">
+            <p-datepicker 
+              inputId="due_date"
+              formControlName="due_date"
+              dateFormat="mm/dd/yy"
+              [class.ng-invalid]="isFieldInvalid(jobForm, 'due_date')"
+              [style]="{ width: '100%' }">
+            </p-datepicker>
+            <label for="due_date">Due Date</label>
+          </p-iftalabel>
+        </p-inputgroup>
+        <small class="error-message" *ngIf="isFieldInvalid(jobForm, 'due_date')">
+          {{ getFieldError(jobForm, 'due_date') }}
+        </small>
+      </div>
+    </div>
+
+    <!-- Description Field -->
+    <div class="field-row full-width">
+      <p-inputgroup>
+        <p-inputgroup-addon>
+          <i class="pi pi-file-edit"></i>
+        </p-inputgroup-addon>
+        <p-iftalabel>
+          <textarea 
+            pInputTextarea
+            inputId="description" 
+            formControlName="description"
+            rows="4"
+            [style]="{ width: '100%' }">
+          </textarea>
+          <label for="description">Description</label>
+        </p-iftalabel>
+      </p-inputgroup>
+    </div>
+
+    <!-- File Upload Section -->
+    <div class="field-row full-width">
+      <app-file-uploader
+        [readonly]="false"
+        [multiple]="true"
+        [initialFiles]="currentJobAttachments"
+        (filesChanged)="onFilesChanged($event)">
+      </app-file-uploader>
+    </div>
+  </form>
+
+  <ng-template pTemplate="footer">
+    <button pButton type="button" severity="secondary" label="Cancel" icon="pi pi-times" (click)="cancelDialog()"></button>
+    <button 
+      pButton 
+      type="button" 
+      severity="primary" 
+      label="Save" 
+      icon="pi pi-check" 
+      [disabled]="jobForm.invalid"
+      (click)="saveJob($event)">
+    </button>
+  </ng-template>
+</p-dialog>
+
+<!-- Global Toast and Confirmation -->
+<p-confirmdialog />
+<p-toast />
