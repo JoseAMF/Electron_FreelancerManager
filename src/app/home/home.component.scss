@@ -1,3 +1,184 @@
-:host {
-  
+.dashboard-container {
+  padding: 1rem;
+  max-width: 1400px;
+  margin: 0 auto;
+
+  .calendar-header {
+    margin-bottom: 1rem;
+
+    .header-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+
+      .header-left {
+        h2 {
+          margin: 0 0 0.5rem 0;
+          color: var(--text-color);
+        }
+
+        p {
+          margin: 0;
+          color: var(--text-color-secondary);
+        }
+      }
+
+      .header-actions {
+        display: flex;
+        gap: 0.5rem;
+      }
+    }
+  }
+
+  .calendar-controls {
+    margin-bottom: 1rem;
+
+    .controls-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+
+      .nav-controls {
+        display: flex;
+        align-items: center;
+      }
+
+      .current-date {
+        h3 {
+          margin: 0;
+          color: var(--text-color);
+          font-weight: 600;
+        }
+      }
+
+      .view-controls {
+        display: flex;
+        gap: 0.25rem;
+      }
+    }
+
+    .status-legend {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--surface-border);
+
+      .legend-label {
+        font-weight: 600;
+        color: var(--text-color);
+        margin-right: 0.5rem;
+      }
+    }
+  }
+
+  .calendar-content {
+    .calendar-wrapper {
+      min-height: 600px;
+    }
+  }
+}
+
+// Calendar event styling
+:host ::ng-deep {
+  .job-event {
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    .cal-event-title {
+      font-weight: 600;
+    }
+  }
+
+  // Status-specific styling
+  .status-pending {
+    background-color: #fef3c7 !important;
+    border-left: 4px solid #fbbf24 !important;
+    color: #92400e !important;
+  }
+
+  .status-in-progress {
+    background-color: #dbeafe !important;
+    border-left: 4px solid #3b82f6 !important;
+    color: #1e40af !important;
+  }
+
+  .status-completed {
+    background-color: #d1fae5 !important;
+    border-left: 4px solid #10b981 !important;
+    color: #065f46 !important;
+  }
+
+  .status-cancelled {
+    background-color: #fee2e2 !important;
+    border-left: 4px solid #ef4444 !important;
+    color: #991b1b !important;
+  }
+
+  .status-on-hold {
+    background-color: #f3f4f6 !important;
+    border-left: 4px solid #6b7280 !important;
+    color: #374151 !important;
+  }
+
+  // Calendar styling
+  .cal-month-view {
+    .cal-cell-top {
+      min-height: 40px;
+    }
+
+    .cal-day-cell {
+      min-height: 120px;
+    }
+
+    .cal-event {
+      margin-bottom: 2px;
+    }
+  }
+
+  .cal-week-view,
+  .cal-day-view {
+    .cal-event {
+      border-radius: 4px;
+    }
+  }
+}
+
+// Responsive design
+@media (max-width: 768px) {
+  .dashboard-container {
+    padding: 0.5rem;
+
+    .calendar-controls {
+      .controls-row {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: stretch;
+
+        .nav-controls,
+        .view-controls {
+          justify-content: center;
+        }
+
+        .current-date {
+          text-align: center;
+        }
+      }
+
+      .status-legend {
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+    }
+  }
 }

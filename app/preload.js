@@ -31,7 +31,7 @@ const electronAPI = {
         getById: (id) => electron_1.ipcRenderer.invoke('attachment:getById', id),
         getByJob: (jobId) => electron_1.ipcRenderer.invoke('attachment:getByJob', jobId),
         delete: (id) => electron_1.ipcRenderer.invoke('attachment:delete', id),
-        saveFile: (fileName, fileBuffer, jobId, paymentId) => electron_1.ipcRenderer.invoke('attachment:saveFile', fileName, fileBuffer, jobId, paymentId),
+        saveFile: (fileName, fileBuffer, subPath, jobId, paymentId) => electron_1.ipcRenderer.invoke('attachment:saveFile', fileName, fileBuffer, subPath, jobId, paymentId),
         getContent: (id) => electron_1.ipcRenderer.invoke('attachment:getContent', id)
     },
     payment: {

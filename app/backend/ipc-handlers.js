@@ -104,7 +104,6 @@ function setupIpcHandlers() {
     electron_1.ipcMain.handle('attachment:delete', (event, id) => __awaiter(this, void 0, void 0, function* () {
         return yield attachmentService.deleteAttachment(id);
     }));
-    //fileName, fileBuffer, subPath, jobId, paymentId
     electron_1.ipcMain.handle('attachment:saveFile', (event, fileName, fileBuffer, subPath, jobId, paymentId) => __awaiter(this, void 0, void 0, function* () {
         return yield attachmentService.saveFile(fileName, fileBuffer, subPath, jobId, paymentId);
     }));

@@ -45,9 +45,9 @@ export class MenuComponent implements OnInit {
   private initializeMenuItems() {
     this.items = [
       {
-        label: 'Dashboard',
+        label: 'Home',
         icon: 'pi-home',
-        routerLink: ['/dashboard']
+        routerLink: ['/home']
       },
       {
         label: 'Clients',

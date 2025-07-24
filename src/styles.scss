@@ -1,5 +1,5 @@
 /* You can add global styles to this file, and also import other style files */
-
+@import "../node_modules/angular-calendar/css/angular-calendar.css";
 @import "primeicons/primeicons.css";
 
 // Import Bootstrap CSS for layout and utility classes
@@ -29,6 +29,7 @@ html, body {
 .items-center {
   align-items: center;
 }
+
 
 .gap-2 {
   gap: 0.5rem;
