@@ -4,10 +4,12 @@
   margin: 0 auto;
   background: var(--p-surface-ground);
   min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
 
   .calendar-header {
-    margin-bottom: 1rem;
-
+    // Remove margin-bottom since we're using gap on parent
     .header-content {
       display: flex;
       justify-content: space-between;
@@ -33,8 +35,7 @@
   }
 
   .calendar-controls {
-    margin-bottom: 1rem;
-
+    // Remove margin-bottom since we're using gap on parent
     .controls-row {
       display: flex;
       justify-content: space-between;
@@ -76,6 +77,8 @@
   }
 
   .calendar-content {
+    flex: 1;
+    
     .calendar-wrapper {
       min-height: 600px;
     }

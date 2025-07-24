@@ -290,6 +290,22 @@ export class GlobalDialogsComponent implements OnInit, OnDestroy {
         try {
           let formData = this.jobForm.value;
           formData.client_id = formData.client?.id;
+          
+          // Handle completion date based on status
+          const currentStatus = formData.status;
+          const previousStatus = isEdit ? this.dialogState.data.job.status : null;
+          
+          if (currentStatus === 'completed' && previousStatus !== 'completed') {
+            // Set completion date when status changes to completed
+            formData.completed_date = new Date();
+          } else if (currentStatus !== 'completed' && previousStatus === 'completed') {
+            // Clear completion date when status changes from completed to something else
+            formData.completed_date = null;
+          } else if (currentStatus === 'completed' && isEdit && this.dialogState.data.job.completed_date) {
+            // Keep existing completion date if already completed
+            formData.completed_date = this.dialogState.data.job.completed_date;
+          }
+          
           let result;
 
           if (isEdit) {

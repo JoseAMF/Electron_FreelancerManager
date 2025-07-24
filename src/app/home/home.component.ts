@@ -131,7 +131,9 @@ export class HomeComponent implements OnInit {
     this.loading = true;
     try {
       this.jobs = await this.jobService.getAllJobs();
-      this.events = this.jobs.map(job => this.jobToCalendarEvent(job));
+      // Filter out cancelled jobs since there will be no more work on them
+      const activeJobs = this.jobs.filter(job => job.status !== Status.CANCELLED);
+      this.events = activeJobs.map(job => this.jobToCalendarEvent(job));
       this.refresh.next();
     } catch (error) {
       console.error('Error loading jobs:', error);
@@ -168,7 +170,7 @@ export class HomeComponent implements OnInit {
   }
 
   private loadMockData(): void {
-    // Mock data for browser testing
+    // Mock data for browser testing (excluding cancelled jobs)
     const mockJobs: Partial<Job>[] = [
       {
         id: 1,

@@ -20,6 +20,7 @@
                     <th pSortableColumn="status">Status <p-sortIcon field="status" /></th>
                     <th pSortableColumn="price">Price <p-sortIcon field="price" /></th>
                     <th pSortableColumn="due_date">Due Date <p-sortIcon field="due_date" /></th>
+                    <th pSortableColumn="completed_date">Completed Date <p-sortIcon field="completed_date" /></th>
                     <th pSortableColumn="created_at">Created At <p-sortIcon field="created_at" /></th>
                     <th>Actions</th>
                 </tr>
@@ -36,6 +37,14 @@
                     </td>
                     <td>${{ job.price | number:'1.2-2' }}</td>
                     <td>{{ job.due_date | date: 'dd/MMM/YY' }}</td>
+                    <td>
+                        <span *ngIf="job.completed_date; else noCompletedDate">
+                            {{ job.completed_date | date: 'dd/MMM/YY hh:mm' }}
+                        </span>
+                        <ng-template #noCompletedDate>
+                            <span class="text-muted">-</span>
+                        </ng-template>
+                    </td>
                     <td>{{ job.created_at | date: 'dd/MMM/YY hh:mm' }}</td>
 
                     <td>

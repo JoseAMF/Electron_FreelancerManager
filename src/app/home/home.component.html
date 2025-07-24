@@ -3,7 +3,7 @@
   <p-card class="calendar-header">
     <div class="header-content">
       <div class="header-left">
-        <h2>{{ 'PAGES.HOME.TITLE' | translate }}</h2>
+        <h2>Freela Manager</h2>
         <p>Manage your jobs and deadlines</p>
       </div>
       <div class="header-actions">
@@ -107,17 +107,7 @@
       </p-tag>
       <p-tag 
         [value]="getStatusLabel(Status.COMPLETED)" 
-        [severity]="getStatusSeverity(Status.COMPLETED)"
-        class="mr-2">
-      </p-tag>
-      <!-- <p-tag 
-        [value]="getStatusLabel(Status.ON_HOLD)" 
-        [severity]="getStatusSeverity(Status.ON_HOLD)"
-        class="mr-2">
-      </p-tag> -->
-      <p-tag 
-        [value]="getStatusLabel(Status.CANCELLED)" 
-        [severity]="getStatusSeverity(Status.CANCELLED)">
+        [severity]="getStatusSeverity(Status.COMPLETED)">
       </p-tag>
     </div>
   </p-card>

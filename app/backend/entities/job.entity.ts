@@ -31,6 +31,9 @@ export class Job extends BaseEntity {
     due_date?: Date;
 
     @Column({ nullable: true })
+    completed_date?: Date;
+
+    @Column({ nullable: true })
     start_date?: Date;
 
     @OneToMany(() => Payment, payment => payment.job)
