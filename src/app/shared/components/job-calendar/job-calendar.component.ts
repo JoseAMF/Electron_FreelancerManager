@@ -19,6 +19,7 @@ import { TooltipModule } from 'primeng/tooltip';
 
 import { Status } from '../../../../../app/backend/entities/status.enum';
 import { Job } from '../../../../../app/backend/entities';
+import { DateUtils } from '../../../core/utils';
 
 const statusColors: { [key in Status]: any } = {
   [Status.PENDING]: {
@@ -96,24 +97,19 @@ export class JobCalendarComponent implements OnInit, OnChanges {
   }
 
   private jobToCalendarEvent(job: Job): CalendarEvent {
-    // Parse DD/MM/YYYY string dates correctly
-    const parseDate = (dateString: string): Date => {
-      const [day, month, year] = dateString.split('/').map(Number);
-      return new Date(year, month - 1, day);
-    };
-
-    const startDate = job.start_date ? parseDate(job.start_date) : new Date();
+    let startDate = job.start_date ? DateUtils.parseStringToDate(job.start_date) : new Date();
     let endDate: Date | null = null;
     
     if (job.completed_date) {
-      endDate = parseDate(job.completed_date);
+      endDate = DateUtils.parseStringToDate(job.completed_date);
+      startDate = endDate;
     } else if (job.due_date) {
-      endDate = parseDate(job.due_date);
+      endDate = DateUtils.parseStringToDate(job.due_date);
     }
     
     return {
       id: job.id,
-      start: startDate,
+      start: startDate || new Date(), // Fallback to current date if null
       end: endDate || undefined,
       title: job.title,
       color: statusColors[job.status as Status] || statusColors[Status.PENDING],

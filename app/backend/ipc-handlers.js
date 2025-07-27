@@ -119,6 +119,35 @@ function setupIpcHandlers() {
     electron_1.ipcMain.handle('attachment:getContent', (event, id) => __awaiter(this, void 0, void 0, function* () {
         return yield attachmentService.getFileContent(id);
     }));
+    // File system handlers
+    electron_1.ipcMain.handle('filesystem:openFile', (event, id) => __awaiter(this, void 0, void 0, function* () {
+        try {
+            const attachment = yield attachmentService.getAttachmentById(id);
+            if (attachment && attachment.file_path) {
+                yield electron_1.shell.openPath(attachment.file_path);
+                return { success: true };
+            }
+            return { success: false, error: 'File not found' };
+        }
+        catch (error) {
+            console.error('Error opening file:', error);
+            return { success: false, error: error.message };
+        }
+    }));
+    electron_1.ipcMain.handle('filesystem:showInFolder', (event, id) => __awaiter(this, void 0, void 0, function* () {
+        try {
+            const attachment = yield attachmentService.getAttachmentById(id);
+            if (attachment && attachment.file_path) {
+                electron_1.shell.showItemInFolder(attachment.file_path);
+                return { success: true };
+            }
+            return { success: false, error: 'File not found' };
+        }
+        catch (error) {
+            console.error('Error showing file in folder:', error);
+            return { success: false, error: error.message };
+        }
+    }));
     // Payment handlers
     electron_1.ipcMain.handle('payment:create', (event, paymentData) => __awaiter(this, void 0, void 0, function* () {
         return yield paymentService.createPayment(paymentData);

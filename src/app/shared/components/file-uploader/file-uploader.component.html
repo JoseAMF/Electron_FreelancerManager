@@ -75,8 +75,30 @@
           </div>
           
           <!-- Actions -->
-          <div class="file-actions" *ngIf="!readonly">
+          <div class="file-actions">
+            <!-- View/Download actions for uploaded files -->
+            <ng-container *ngIf="file.isUploaded">
+              <button 
+                type="button"
+                pButton 
+                icon="pi pi-eye" 
+                class="p-button-rounded p-button-text p-button-sm p-button-info"
+                pTooltip="Open file"
+                (click)="openFile(file, $event)">
+              </button>
+              <button 
+                type="button"
+                pButton 
+                icon="pi pi-folder-open" 
+                class="p-button-rounded p-button-text p-button-sm p-button-warning"
+                pTooltip="Show in folder"
+                (click)="showInFolder(file, $event)">
+              </button>
+            </ng-container>
+            
+            <!-- Remove action (only if not readonly) -->
             <button 
+              *ngIf="!readonly"
               type="button"
               pButton 
               icon="pi pi-times" 

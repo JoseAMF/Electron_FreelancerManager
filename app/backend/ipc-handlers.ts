@@ -1,6 +1,7 @@
-import { ipcMain } from 'electron';
+import { ipcMain, shell } from 'electron';
 import { OrmDatabaseService } from './database/orm-database.service';
 import { ClientService, JobService, AttachmentService, PaymentService, ConfigService } from './services';
+import * as path from 'path';
 
 let dbService: OrmDatabaseService;
 let clientService: ClientService;
@@ -132,6 +133,35 @@ export function setupIpcHandlers(): void {
 
   ipcMain.handle('attachment:getContent', async (event, id) => {
     return await attachmentService.getFileContent(id);
+  });
+
+  // File system handlers
+  ipcMain.handle('filesystem:openFile', async (event, id) => {
+    try {
+      const attachment = await attachmentService.getAttachmentById(id);
+      if (attachment && attachment.file_path) {
+        await shell.openPath(attachment.file_path);
+        return { success: true };
+      }
+      return { success: false, error: 'File not found' };
+    } catch (error: any) {
+      console.error('Error opening file:', error);
+      return { success: false, error: error.message };
+    }
+  });
+
+  ipcMain.handle('filesystem:showInFolder', async (event, id) => {
+    try {
+      const attachment = await attachmentService.getAttachmentById(id);
+      if (attachment && attachment.file_path) {
+        shell.showItemInFolder(attachment.file_path);
+        return { success: true };
+      }
+      return { success: false, error: 'File not found' };
+    } catch (error: any) {
+      console.error('Error showing file in folder:', error);
+      return { success: false, error: error.message };
+    }
   });
 
   // Payment handlers

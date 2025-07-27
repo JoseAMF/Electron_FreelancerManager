@@ -52,6 +52,10 @@ const electronAPI = {
         getAll: () => electron_1.ipcRenderer.invoke('config:getAll'),
         delete: (key) => electron_1.ipcRenderer.invoke('config:delete', key)
     },
+    filesystem: {
+        openFile: (id) => electron_1.ipcRenderer.invoke('filesystem:openFile', id),
+        showInFolder: (id) => electron_1.ipcRenderer.invoke('filesystem:showInFolder', id)
+    },
     app: {
         getVersion: () => electron_1.ipcRenderer.invoke('app:getVersion'),
         getPlatform: () => electron_1.ipcRenderer.invoke('app:getPlatform')

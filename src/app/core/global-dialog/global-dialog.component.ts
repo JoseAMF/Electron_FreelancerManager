@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
-import { CommonModule, DatePipe } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { Subject, takeUntil } from 'rxjs';
 
 // PrimeNG Imports
@@ -23,6 +23,7 @@ import { FileItem, FileUploaderComponent } from '../../shared/components/file-up
 import { Client, Attachment } from '../../../../app/backend/entities';
 import { DialogState, DialogService } from '../dialog.service';
 import { ClientService, JobService, AttachmentService } from '../services';
+import { DateUtils } from '../utils';
 
 
 
@@ -46,8 +47,7 @@ import { ClientService, JobService, AttachmentService } from '../services';
     DatePickerModule,
     ConfirmDialog,
     ToastModule,
-    FileUploaderComponent,
-    DatePipe
+    FileUploaderComponent
   ],
   templateUrl: './global-dialog.component.html',
   styleUrls: ['./global-dialog.component.scss'],
@@ -150,7 +150,7 @@ export class GlobalDialogsComponent implements OnInit, OnDestroy {
         status: jobData.job.status,
         price: jobData.job.price,
         client: jobData.job.client,
-        due_date: new Date(jobData.job.due_date!)
+        due_date: DateUtils.parseStringToDate(jobData.job.due_date!)
       });
       await this.loadJobAttachments(jobData.job.id!);
     } else {

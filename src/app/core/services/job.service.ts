@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { Job } from '../../../../app/backend/entities';
 import { BackendService } from './backend/backend.service';
 import { Status } from '../../../../app/backend/entities/status.enum';
+import { DateUtils } from '../utils';
 
 
 @Injectable({
@@ -12,26 +13,12 @@ export class JobService {
 
   // Utility function to convert Date to DD/MM/YYYY string
   private dateToString(date: Date | string): string {
-    if (typeof date === 'string') {
-      // If it's already in DD/MM/YYYY format, return as is
-      const dateRegex = /^\d{2}\/\d{2}\/\d{4}$/;
-      if (dateRegex.test(date)) {
-        return date;
-      }
-      // If it's an ISO string or other format, convert it
-      date = new Date(date);
-    }
-    
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const year = date.getFullYear();
-    return `${day}/${month}/${year}`;
+    return DateUtils.dateToString(date);
   }
 
   // Utility function to convert DD/MM/YYYY string to Date
   private stringToDate(dateString: string): Date {
-    const [day, month, year] = dateString.split('/').map(Number);
-    return new Date(year, month - 1, day);
+    return DateUtils.parseStringToDate(dateString) || new Date();
   }
 
   // Process job data to convert dates to strings
@@ -108,7 +95,7 @@ export class JobService {
     // Calculate week range using moment
     const moment = require('moment');
     const startOfWeek = moment(date).startOf('isoWeek').toDate();
-    
+
     const endOfWeek = moment(date).endOf('isoWeek').toDate();
 
     console.log(`Fetching jobs from ${startOfWeek.toISOString()} to ${endOfWeek.toISOString()} with status ${status}`);
@@ -125,11 +112,11 @@ export class JobService {
 
   // Utility methods for frontend use
   getDateAsString(date: Date | string): string {
-    return this.dateToString(date);
+    return DateUtils.dateToString(date);
   }
 
   parseStringToDate(dateString: string): Date {
-    return this.stringToDate(dateString);
+    return DateUtils.parseStringToDate(dateString) || new Date();
   }
 
   // Migration method (run once to convert existing data)

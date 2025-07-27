@@ -364,4 +364,66 @@ export class FileUploaderComponent implements OnInit, OnDestroy, OnChanges {
   getPendingFiles(): FileItem[] {
     return this.files.filter(file => !file.isUploaded);
   }
+
+  async openFile(file: FileItem, event: Event): Promise<void> {
+    event.stopPropagation();
+    
+    if (!file.isUploaded || !file.attachment?.id) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Warning',
+        detail: 'File is not uploaded yet or attachment ID is missing'
+      });
+      return;
+    }
+
+    try {
+      const result = await this.attachmentService.openFile(file.attachment.id);
+      if (!result.success) {
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: result.error || 'Failed to open file'
+        });
+      }
+    } catch (error) {
+      console.error('Error opening file:', error);
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'Failed to open file'
+      });
+    }
+  }
+
+  async showInFolder(file: FileItem, event: Event): Promise<void> {
+    event.stopPropagation();
+    
+    if (!file.isUploaded || !file.attachment?.id) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Warning',
+        detail: 'File is not uploaded yet or attachment ID is missing'
+      });
+      return;
+    }
+
+    try {
+      const result = await this.attachmentService.showInFolder(file.attachment.id);
+      if (!result.success) {
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: result.error || 'Failed to show file in folder'
+        });
+      }
+    } catch (error) {
+      console.error('Error showing file in folder:', error);
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'Failed to show file in folder'
+      });
+    }
+  }
 }

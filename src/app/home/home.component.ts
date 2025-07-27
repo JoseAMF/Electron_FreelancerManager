@@ -118,12 +118,12 @@ export class HomeComponent implements OnInit {
     this.jobs = [...pending, ...ongoing, ...completed];
   }
 
-  onEventClicked(event: CalendarEvent): void {
+  async onEventClicked(event: CalendarEvent): Promise<void> {
     if (event.meta?.job) {
-      // Navigate to job details or open job modal
-      this.router.navigate(['/jobs'], { 
-        queryParams: { id: event.meta.job.id } 
-      });
+      const result = await this.dialogService.openJobDialog({ job: event.meta.job, isEdit: true });
+      if (result.success) {
+        await this.loadJobsForCurrentView();
+      }
     }
   }
 

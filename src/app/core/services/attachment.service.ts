@@ -35,4 +35,12 @@ export class AttachmentService {
   async getFileContent(id: number): Promise<ArrayBuffer | null> {
     return await this.backendService.invokeBackend('attachment', 'getContent', id);
   }
+
+  async openFile(id: number): Promise<{ success: boolean; error?: string }> {
+    return await this.backendService.invokeBackend('filesystem', 'openFile', id);
+  }
+
+  async showInFolder(id: number): Promise<{ success: boolean; error?: string }> {
+    return await this.backendService.invokeBackend('filesystem', 'showInFolder', id);
+  }
 }
