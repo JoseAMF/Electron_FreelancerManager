@@ -28,13 +28,13 @@ export class Job extends BaseEntity {
     status!: Status;
 
     @Column({ nullable: true })
-    due_date?: Date;
+    due_date?: string; // Format: DD/MM/YYYY
 
     @Column({ nullable: true })
-    completed_date?: Date;
+    completed_date?: string; // Format: DD/MM/YYYY
 
     @Column({ nullable: true })
-    start_date?: Date;
+    start_date?: string; // Format: DD/MM/YYYY
 
     @OneToMany(() => Payment, payment => payment.job)
     payments?: Payment[];

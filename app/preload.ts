@@ -24,7 +24,10 @@ const electronAPI = {
     updateStatus: (id: number, status: string) => ipcRenderer.invoke('job:updateStatus', id, status),
     delete: (id: number) => ipcRenderer.invoke('job:delete', id),
     search: (searchTerm: string) => ipcRenderer.invoke('job:search', searchTerm),
-    getStats: () => ipcRenderer.invoke('job:getStats')
+    getStats: () => ipcRenderer.invoke('job:getStats'),
+    // Date-filtered methods
+    getByDateRange: (startDate: string, endDate?: string, status?: string) => 
+      ipcRenderer.invoke('job:getByDateRange', startDate, endDate, status),
   },
 
   attachment: {

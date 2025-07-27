@@ -96,6 +96,15 @@ export function setupIpcHandlers(): void {
     return await jobService.getJobStats();
   });
 
+  // Date-filtered job handlers
+  ipcMain.handle('job:getByDateRange', async (event, startDate, endDate, status) => {
+    if (endDate) {
+      return await jobService.getJobsByDateRange(new Date(startDate), new Date(endDate), status);
+    } else {
+      return await jobService.getJobsByDateRange(new Date(startDate), undefined, status);
+    }
+  });
+
   // Attachment handlers
   ipcMain.handle('attachment:create', async (event, attachmentData) => {
     return await attachmentService.createAttachment(attachmentData);

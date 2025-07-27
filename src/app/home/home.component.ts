@@ -1,51 +1,18 @@
-import { Component, OnInit, ChangeDetectionStrategy, ChangeDetectorRef, Inject } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
+import { CommonModule } from '@angular/common';
 import { ButtonModule } from 'primeng/button';
+import { CardModule } from 'primeng/card';
+import { TagModule } from 'primeng/tag';
 import { BackendService } from '../core/services/backend/backend.service';
 import { JobService } from '../core/services/job.service';
-import { CommonModule, DOCUMENT } from '@angular/common';
-import { 
-  CalendarEvent, 
-  CalendarView, 
-  CalendarModule as AngularCalendarModule,
-  CalendarEventTimesChangedEvent,
-  CalendarDateFormatter,
-  CalendarA11y,
-  CalendarUtils,
-  CalendarEventTitleFormatter,
-  CalendarMonthViewDay
-} from 'angular-calendar';
-import { Subject } from 'rxjs';
-import { startOfDay, endOfDay, subDays, addDays, endOfMonth, isSameDay, isSameMonth, addHours, parseISO } from 'date-fns';
-
-import { CardModule } from 'primeng/card';
-import { MenuModule } from 'primeng/menu';
-import { MenuItem } from 'primeng/api';
-import { TagModule } from 'primeng/tag';
-import { TooltipModule } from 'primeng/tooltip';
-import { Status } from '../../../app/backend/entities/status.enum';
+import { ClientService } from '../core/services/client.service';
+import { CalendarEvent, CalendarView } from 'angular-calendar';
 import { Job } from '../../../app/backend/entities';
 import { DialogService } from '../core/dialog.service';
-
-const statusColors: { [key in Status]: any } = {
-  [Status.PENDING]: {
-    primary: '#fbbf24',
-    secondary: '#fef3c7'
-  },
-  [Status.IN_PROGRESS]: {
-    primary: '#3b82f6',
-    secondary: '#dbeafe'
-  },
-  [Status.COMPLETED]: {
-    primary: '#10b981',
-    secondary: '#d1fae5'
-  },
-  [Status.CANCELLED]: {
-    primary: '#ef4444',
-    secondary: '#fee2e2'
-  }
-};
+import { JobCalendarComponent } from '../shared/components/job-calendar/job-calendar.component';
+import { Status } from '../../../app/backend/entities/status.enum';
+import { startOfMonth, endOfMonth, startOfWeek, endOfWeek } from 'date-fns';
 
 @Component({
   selector: 'app-home',
@@ -55,130 +22,104 @@ const statusColors: { [key in Status]: any } = {
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     CommonModule,
-    RouterLink, 
-    TranslateModule, 
     ButtonModule,
-    AngularCalendarModule,
     CardModule,
-    MenuModule,
     TagModule,
-    TooltipModule
-  ],
-  providers: [
-    CalendarDateFormatter,
-    CalendarA11y,
-    CalendarUtils,
-    CalendarEventTitleFormatter
+    JobCalendarComponent
   ]
 })
 export class HomeComponent implements OnInit {
-
-  CalendarView = CalendarView;
-  Status = Status;
-
-  view: CalendarView = CalendarView.Month;
-  viewDate: Date = new Date();
-  refresh = new Subject<void>();
-  events: CalendarEvent[] = [];
-  activeDayIsOpen: boolean = true;
-  
   jobs: Job[] = [];
   loading = false;
   
-  viewMenuItems: MenuItem[] = [
-    {
-      label: 'Month',
-      icon: 'pi pi-calendar',
-      command: () => this.setView(CalendarView.Month)
-    },
-    {
-      label: 'Week',
-      icon: 'pi pi-table',
-      command: () => this.setView(CalendarView.Week)
-    },
-    {
-      label: 'Day',
-      icon: 'pi pi-clock',
-      command: () => this.setView(CalendarView.Day)
-    }
-  ];
+  // Calendar state tracking
+  currentView: CalendarView = CalendarView.Month;
+  currentViewDate: Date = new Date();
+
+  // Cache for filtered jobs by status
+  private pendingJobsCache: Job[] = [];
+  private ongoingJobsCache: Job[] = [];
+  private completedJobsCache: Job[] = [];
 
   constructor(
     private router: Router,
     private backendService: BackendService,
     private jobService: JobService,
+    private clientService: ClientService,
     private dialogService: DialogService,
     private cdr: ChangeDetectorRef,
   ) { }
 
   async ngOnInit(): Promise<void> {    
-      await this.backendService.initializeDatabase();
-      await this.loadJobs();
+    await this.backendService.initializeDatabase();
+    await this.loadJobsForCurrentView();
   }
 
-  async loadJobs(): Promise<void> {
+  async loadJobsForCurrentView(): Promise<void> {
     this.loading = true;
     try {
-      this.jobs = await this.jobService.getAllJobs();
-      // Filter out cancelled jobs since there will be no more work on them
-      const activeJobs = this.jobs.filter(job => job.status !== Status.CANCELLED);
-      this.events = activeJobs.map(job => this.jobToCalendarEvent(job));
-      this.refresh.next();
+      // Load jobs based on current calendar view using backend filtering
+      switch (this.currentView) {
+        case CalendarView.Day:
+          await this.loadJobsByDay();
+          break;
+        case CalendarView.Week:
+          await this.loadJobsByWeek();
+          break;
+        case CalendarView.Month:
+        default:
+          await this.loadJobsByMonth();
+          break;
+      }
     } catch (error) {
-      console.error('Error loading jobs:', error);
+      console.error('Error loading jobs for current view:', error);
     } finally {
       this.loading = false;
       this.cdr.detectChanges();
     }
   }
 
-  private jobToCalendarEvent(job: Job): CalendarEvent {
-    const startDate = job.start_date ? new Date(job.start_date) : new Date();
-    let endDate: Date | null = null;
-    if(job.completed_date) {
-      endDate = new Date(job.completed_date);
-    } else {
-      endDate = job.due_date ? new Date(job.due_date) : null;
-    }
+  private async loadJobsByDay(): Promise<void> {
+    const [pending, ongoing, completed] = await Promise.all([
+      this.jobService.getJobsByDay(this.currentViewDate, Status.PENDING),
+      this.jobService.getJobsByDay(this.currentViewDate, Status.IN_PROGRESS),
+      this.jobService.getJobsByDay(this.currentViewDate, Status.COMPLETED)
+    ]);
     
-    return {
-      id: job.id,
-      start: startDate,
-      end: endDate || undefined,
-      title: job.title,
-      color: statusColors[job.status as Status] || statusColors[Status.PENDING],
-      meta: {
-        job: job,
-        status: job.status,
-        client: job.client?.name || 'No Client'
-      },
-      cssClass: `job-event status-${job.status?.toLowerCase().replace('_', '-')}`,
-      resizable: {
-        beforeStart: false,
-        afterEnd: false
-      },
-      draggable: false
-    };
+    this.pendingJobsCache = pending;
+    this.ongoingJobsCache = ongoing;
+    this.completedJobsCache = completed;
+    this.jobs = [...pending, ...ongoing, ...completed];
   }
 
-  dayClicked({ date, events }: { date: Date; events: CalendarEvent[] }): void {
-    if (isSameMonth(date, this.viewDate)) {
-      if (
-        (isSameDay(this.viewDate, date) && this.activeDayIsOpen === true) ||
-        events.length === 0
-      ) {
-        this.activeDayIsOpen = false;
-      } else {
-        this.activeDayIsOpen = true;
-      }
-      this.viewDate = date;
-    }
+  private async loadJobsByWeek(): Promise<void> {
+    const [pending, ongoing, completed] = await Promise.all([
+      this.jobService.getJobsByWeek(this.currentViewDate, Status.PENDING),
+      this.jobService.getJobsByWeek(this.currentViewDate, Status.IN_PROGRESS),
+      this.jobService.getJobsByWeek(this.currentViewDate, Status.COMPLETED)
+    ]);
+    
+    this.pendingJobsCache = pending;
+    this.ongoingJobsCache = ongoing;
+    this.completedJobsCache = completed;
+    this.jobs = [...pending, ...ongoing, ...completed];
   }
 
-  handleEvent(action: string, event: CalendarEvent): void {
-    console.log(action, event);
+  private async loadJobsByMonth(): Promise<void> {
+    const [pending, ongoing, completed] = await Promise.all([
+      this.jobService.getJobsByMonth(this.currentViewDate, Status.PENDING),
+      this.jobService.getJobsByMonth(this.currentViewDate, Status.IN_PROGRESS),
+      this.jobService.getJobsByMonth(this.currentViewDate, Status.COMPLETED)
+    ]);
     
-    if (action === 'Clicked' && event.meta?.job) {
+    this.pendingJobsCache = pending;
+    this.ongoingJobsCache = ongoing;
+    this.completedJobsCache = completed;
+    this.jobs = [...pending, ...ongoing, ...completed];
+  }
+
+  onEventClicked(event: CalendarEvent): void {
+    if (event.meta?.job) {
       // Navigate to job details or open job modal
       this.router.navigate(['/jobs'], { 
         queryParams: { id: event.meta.job.id } 
@@ -186,29 +127,80 @@ export class HomeComponent implements OnInit {
     }
   }
 
-  setView(view: CalendarView) {
-    this.view = view;
+  async onCreateNewJob(): Promise<void> {
+    const result = await this.dialogService.openJobDialog();
+    if (result.success) {
+      await this.loadJobsForCurrentView();
+    }
+  }
+
+  // Calendar view change handlers
+  onCalendarViewChanged(view: CalendarView): void {
+    this.currentView = view;
+    this.loadJobsForCurrentView(); // Reload jobs for new view
     this.cdr.detectChanges();
   }
 
-  closeOpenMonthViewDay() {
-    this.activeDayIsOpen = false;
+  onCalendarDateChanged(date: Date): void {
+    this.currentViewDate = date;
+    this.loadJobsForCurrentView(); // Reload jobs for new date
+    this.cdr.detectChanges();
   }
 
-  previousView() {
-    this.closeOpenMonthViewDay();
+  // Simplified getters using cached data from backend filtering
+  get pendingJobs(): Job[] {
+    return this.pendingJobsCache;
   }
 
-  nextView() {
-    this.closeOpenMonthViewDay();
+  get ongoingJobs(): Job[] {
+    return this.ongoingJobsCache;
   }
 
-  goToToday() {
-    this.viewDate = new Date();
-    this.closeOpenMonthViewDay();
+  get completedJobs(): Job[] {
+    return this.completedJobsCache;
   }
 
-  getStatusSeverity(status: Status): string {
+  // Additional getters for counts and summaries
+  get totalJobsInView(): number {
+    return this.jobs.length;
+  }
+
+  get pendingJobsCount(): number {
+    return this.pendingJobsCache.length;
+  }
+
+  get ongoingJobsCount(): number {
+    return this.ongoingJobsCache.length;
+  }
+
+  get completedJobsCount(): number {
+    return this.completedJobsCache.length;
+  }
+
+  get currentViewLabel(): string {
+    switch (this.currentView) {
+      case CalendarView.Month:
+        return this.currentViewDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+      case CalendarView.Week:
+        const weekStart = startOfWeek(this.currentViewDate, { weekStartsOn: 1 });
+        const weekEnd = endOfWeek(this.currentViewDate, { weekStartsOn: 1 });
+        return `${weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${weekEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
+      case CalendarView.Day:
+        return this.currentViewDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+      default:
+        return '';
+    }
+  }
+
+  // Helper methods for template
+  getClientName(clientId: number | undefined): string {
+    if (!clientId) return 'No Client';
+    // This would need to be implemented with client lookup
+    // For now, return a placeholder
+    return `Client ${clientId}`;
+  }
+
+  getStatusSeverity(status: Status): 'success' | 'secondary' | 'info' | 'warning' | 'danger' | 'contrast' {
     switch (status) {
       case Status.COMPLETED:
         return 'success';
@@ -216,25 +208,9 @@ export class HomeComponent implements OnInit {
         return 'info';
       case Status.PENDING:
         return 'warning';
-      case Status.CANCELLED:
-        return 'danger';
       default:
-        return 'info';
+        return 'secondary';
     }
   }
 
-  getStatusLabel(status: Status): string {
-    return status.replace('_', ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
-  }
-
-  async refreshJobs(): Promise<void> {
-    await this.loadJobs();
-  }
-
-  async createNewJob(): Promise<void> {
-    const result = await this.dialogService.openJobDialog();
-    if (result.success) {
-      await this.loadJobs();
-    }
-  }
 }

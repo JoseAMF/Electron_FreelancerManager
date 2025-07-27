@@ -1,0 +1,123 @@
+<div class="calendar-container">
+  <!-- Calendar Controls -->
+  <p-card class="calendar-controls">
+    <div class="controls-row">
+      <!-- Navigation -->
+      <div class="nav-controls">
+        <p-button 
+          icon="pi pi-chevron-left"
+          severity="secondary"
+          [outlined]="true"
+          mwlCalendarPreviousView
+          [view]="view"
+          [(viewDate)]="viewDate"
+          (viewDateChange)="previousView()"
+          pTooltip="Previous">
+        </p-button>
+        
+        <p-button 
+          label="Today"
+          severity="secondary"
+          [outlined]="true"
+          mwlCalendarToday
+          [(viewDate)]="viewDate"
+          (click)="goToToday()"
+          class="mx-2">
+        </p-button>
+        
+        <p-button 
+          icon="pi pi-chevron-right"
+          severity="secondary"
+          [outlined]="true"
+          mwlCalendarNextView
+          [view]="view"
+          [(viewDate)]="viewDate"
+          (viewDateChange)="nextView()"
+          pTooltip="Next">
+        </p-button>
+      </div>
+
+      <!-- Current Date -->
+      <div class="current-date">
+        <h3>{{ viewDate | calendarDate:(view + 'ViewTitle'):'en' }}</h3>
+      </div>
+
+      <!-- View Toggle -->
+      <div class="view-controls">
+        <p-button 
+          label="Month"
+          [severity]="view === CalendarView.Month ? 'primary' : 'secondary'"
+          [outlined]="view !== CalendarView.Month"
+          (onClick)="setView(CalendarView.Month)"
+          class="mr-1">
+        </p-button>
+        <p-button 
+          label="Week"
+          [severity]="view === CalendarView.Week ? 'primary' : 'secondary'"
+          [outlined]="view !== CalendarView.Week"
+          (onClick)="setView(CalendarView.Week)"
+          class="mr-1">
+        </p-button>
+        <p-button 
+          label="Day"
+          [severity]="view === CalendarView.Day ? 'primary' : 'secondary'"
+          [outlined]="view !== CalendarView.Day"
+          (onClick)="setView(CalendarView.Day)">
+        </p-button>
+      </div>
+    </div>
+
+    <!-- Status Legend -->
+    <div class="status-legend">
+      <span class="legend-label">Status Legend:</span>
+      <p-tag 
+        [value]="getStatusLabel(Status.PENDING)" 
+        [severity]="getStatusSeverity(Status.PENDING)"
+        class="mr-2">
+      </p-tag>
+      <p-tag 
+        [value]="getStatusLabel(Status.IN_PROGRESS)" 
+        [severity]="getStatusSeverity(Status.IN_PROGRESS)"
+        class="mr-2">
+      </p-tag>
+      <p-tag 
+        [value]="getStatusLabel(Status.COMPLETED)" 
+        [severity]="getStatusSeverity(Status.COMPLETED)">
+      </p-tag>
+    </div>
+  </p-card>
+
+  <!-- Calendar -->
+  <p-card class="calendar-content">
+    <div [ngSwitch]="view" class="calendar-wrapper">
+      <mwl-calendar-month-view
+        *ngSwitchCase="CalendarView.Month"
+        [viewDate]="viewDate"
+        [events]="events"
+        [refresh]="refresh"
+        [activeDayIsOpen]="activeDayIsOpen"
+        (dayClicked)="dayClicked({ date: $event.day.date, events: $event.day.events })"
+        (eventClicked)="handleEvent('Clicked', $event.event)"
+        class="calendar-view">
+      </mwl-calendar-month-view>
+      
+      <mwl-calendar-week-view
+        *ngSwitchCase="CalendarView.Week"
+        [viewDate]="viewDate"
+        [events]="events"
+        [refresh]="refresh"
+        (eventClicked)="handleEvent('Clicked', $event.event)"
+        class="calendar-view">
+      </mwl-calendar-week-view>
+      
+      <mwl-calendar-day-view
+        *ngSwitchCase="CalendarView.Day"
+        [viewDate]="viewDate"
+        [events]="events"
+        [refresh]="refresh"
+        (eventClicked)="handleEvent('Clicked', $event.event)"
+        class="calendar-view">
+      </mwl-calendar-day-view>
+    </div>
+  </p-card>
+</div>

@@ -88,6 +88,15 @@ function setupIpcHandlers() {
     electron_1.ipcMain.handle('job:getStats', () => __awaiter(this, void 0, void 0, function* () {
         return yield jobService.getJobStats();
     }));
+    // Date-filtered job handlers
+    electron_1.ipcMain.handle('job:getByDateRange', (event, startDate, endDate, status) => __awaiter(this, void 0, void 0, function* () {
+        if (endDate) {
+            return yield jobService.getJobsByDateRange(new Date(startDate), new Date(endDate), status);
+        }
+        else {
+            return yield jobService.getJobsByDateRange(new Date(startDate), undefined, status);
+        }
+    }));
     // Attachment handlers
     electron_1.ipcMain.handle('attachment:create', (event, attachmentData) => __awaiter(this, void 0, void 0, function* () {
         return yield attachmentService.createAttachment(attachmentData);

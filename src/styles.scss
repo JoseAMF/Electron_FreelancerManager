@@ -66,6 +66,311 @@
 
 // Import Bootstrap CSS for layout and utility classes
 
+// Bootstrap-like Grid System
+.container {
+  width: 100%;
+  padding-right: 0.75rem;
+  padding-left: 0.75rem;
+  margin-right: auto;
+  margin-left: auto;
+}
+
+@media (min-width: 576px) {
+  .container {
+    max-width: 540px;
+  }
+}
+
+@media (min-width: 768px) {
+  .container {
+    max-width: 720px;
+  }
+}
+
+@media (min-width: 992px) {
+  .container {
+    max-width: 960px;
+  }
+}
+
+@media (min-width: 1200px) {
+  .container {
+    max-width: 1140px;
+  }
+}
+
+@media (min-width: 1400px) {
+  .container {
+    max-width: 1320px;
+  }
+}
+
+.container-fluid {
+  width: 100%;
+  padding-right: 0.75rem;
+  padding-left: 0.75rem;
+  margin-right: auto;
+  margin-left: auto;
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  margin-right: -0.75rem;
+  margin-left: -0.75rem;
+}
+
+.col {
+  flex: 1 0 0%;
+  padding-right: 0.75rem;
+  padding-left: 0.75rem;
+}
+
+// Generate column classes for all breakpoints
+@mixin make-col($size, $columns: 12) {
+  flex: 0 0 auto;
+  width: percentage($size / $columns);
+  padding-right: 0.75rem;
+  padding-left: 0.75rem;
+}
+
+// Extra small devices (portrait phones, less than 576px)
+@for $i from 1 through 12 {
+  .col-#{$i} {
+    @include make-col($i);
+  }
+}
+
+// Small devices (landscape phones, 576px and up)
+@media (min-width: 576px) {
+  @for $i from 1 through 12 {
+    .col-sm-#{$i} {
+      @include make-col($i);
+    }
+  }
+  .col-sm {
+    flex: 1 0 0%;
+    padding-right: 0.75rem;
+    padding-left: 0.75rem;
+  }
+}
+
+// Medium devices (tablets, 768px and up)
+@media (min-width: 768px) {
+  @for $i from 1 through 12 {
+    .col-md-#{$i} {
+      @include make-col($i);
+    }
+  }
+  .col-md {
+    flex: 1 0 0%;
+    padding-right: 0.75rem;
+    padding-left: 0.75rem;
+  }
+}
+
+// Large devices (desktops, 992px and up)
+@media (min-width: 992px) {
+  @for $i from 1 through 12 {
+    .col-lg-#{$i} {
+      @include make-col($i);
+    }
+  }
+  .col-lg {
+    flex: 1 0 0%;
+    padding-right: 0.75rem;
+    padding-left: 0.75rem;
+  }
+}
+
+// Extra large devices (large desktops, 1200px and up)
+@media (min-width: 1200px) {
+  @for $i from 1 through 12 {
+    .col-xl-#{$i} {
+      @include make-col($i);
+    }
+  }
+  .col-xl {
+    flex: 1 0 0%;
+    padding-right: 0.75rem;
+    padding-left: 0.75rem;
+  }
+}
+
+// Extra extra large devices (larger desktops, 1400px and up)
+@media (min-width: 1400px) {
+  @for $i from 1 through 12 {
+    .col-xxl-#{$i} {
+      @include make-col($i);
+    }
+  }
+  .col-xxl {
+    flex: 1 0 0%;
+    padding-right: 0.75rem;
+    padding-left: 0.75rem;
+  }
+}
+
+// Offset classes
+@mixin make-col-offset($size, $columns: 12) {
+  margin-left: percentage($size / $columns);
+}
+
+@for $i from 0 through 11 {
+  .offset-#{$i} {
+    @include make-col-offset($i);
+  }
+}
+
+@media (min-width: 576px) {
+  @for $i from 0 through 11 {
+    .offset-sm-#{$i} {
+      @include make-col-offset($i);
+    }
+  }
+}
+
+@media (min-width: 768px) {
+  @for $i from 0 through 11 {
+    .offset-md-#{$i} {
+      @include make-col-offset($i);
+    }
+  }
+}
+
+@media (min-width: 992px) {
+  @for $i from 0 through 11 {
+    .offset-lg-#{$i} {
+      @include make-col-offset($i);
+    }
+  }
+}
+
+@media (min-width: 1200px) {
+  @for $i from 0 through 11 {
+    .offset-xl-#{$i} {
+      @include make-col-offset($i);
+    }
+  }
+}
+
+@media (min-width: 1400px) {
+  @for $i from 0 through 11 {
+    .offset-xxl-#{$i} {
+      @include make-col-offset($i);
+    }
+  }
+}
+
+// Auto layout columns
+.col-auto {
+  flex: 0 0 auto;
+  width: auto;
+  padding-right: 0.75rem;
+  padding-left: 0.75rem;
+}
+
+@media (min-width: 576px) {
+  .col-sm-auto {
+    flex: 0 0 auto;
+    width: auto;
+    padding-right: 0.75rem;
+    padding-left: 0.75rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .col-md-auto {
+    flex: 0 0 auto;
+    width: auto;
+    padding-right: 0.75rem;
+    padding-left: 0.75rem;
+  }
+}
+
+@media (min-width: 992px) {
+  .col-lg-auto {
+    flex: 0 0 auto;
+    width: auto;
+    padding-right: 0.75rem;
+    padding-left: 0.75rem;
+  }
+}
+
+@media (min-width: 1200px) {
+  .col-xl-auto {
+    flex: 0 0 auto;
+    width: auto;
+    padding-right: 0.75rem;
+    padding-left: 0.75rem;
+  }
+}
+
+@media (min-width: 1400px) {
+  .col-xxl-auto {
+    flex: 0 0 auto;
+    width: auto;
+    padding-right: 0.75rem;
+    padding-left: 0.75rem;
+  }
+}
+
+// Flexbox utilities for rows
+.row.no-gutters {
+  margin-right: 0;
+  margin-left: 0;
+  
+  > .col,
+  > [class*="col-"] {
+    padding-right: 0;
+    padding-left: 0;
+  }
+}
+
+.justify-content-start {
+  justify-content: flex-start !important;
+}
+
+.justify-content-end {
+  justify-content: flex-end !important;
+}
+
+.justify-content-center {
+  justify-content: center !important;
+}
+
+.justify-content-between {
+  justify-content: space-between !important;
+}
+
+.justify-content-around {
+  justify-content: space-around !important;
+}
+
+.justify-content-evenly {
+  justify-content: space-evenly !important;
+}
+
+.align-items-start {
+  align-items: flex-start !important;
+}
+
+.align-items-end {
+  align-items: flex-end !important;
+}
+
+.align-items-center {
+  align-items: center !important;
+}
+
+.align-items-baseline {
+  align-items: baseline !important;
+}
+
+.align-items-stretch {
+  align-items: stretch !important;
+}
+
 
 html, body {
   margin: 0;

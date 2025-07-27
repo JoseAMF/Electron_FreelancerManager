@@ -23,7 +23,9 @@ const electronAPI = {
         updateStatus: (id, status) => electron_1.ipcRenderer.invoke('job:updateStatus', id, status),
         delete: (id) => electron_1.ipcRenderer.invoke('job:delete', id),
         search: (searchTerm) => electron_1.ipcRenderer.invoke('job:search', searchTerm),
-        getStats: () => electron_1.ipcRenderer.invoke('job:getStats')
+        getStats: () => electron_1.ipcRenderer.invoke('job:getStats'),
+        // Date-filtered methods
+        getByDateRange: (startDate, endDate, status) => electron_1.ipcRenderer.invoke('job:getByDateRange', startDate, endDate, status),
     },
     attachment: {
         create: (attachmentData) => electron_1.ipcRenderer.invoke('attachment:create', attachmentData),

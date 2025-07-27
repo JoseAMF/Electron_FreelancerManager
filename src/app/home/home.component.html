@@ -10,139 +10,92 @@
         <p-button 
           icon="pi pi-plus" 
           label="New Job"
-          (onClick)="createNewJob()"
+          (onClick)="onCreateNewJob()"
           class="mr-2">
         </p-button>
-        <p-button 
-          icon="pi pi-refresh" 
-          [loading]="loading"
-          (onClick)="refreshJobs()"
-          severity="secondary"
-          [outlined]="true">
-        </p-button>
       </div>
     </div>
   </p-card>
 
-  <!-- Calendar Controls -->
-  <p-card class="calendar-controls">
-    <div class="controls-row">
-      <!-- Navigation -->
-      <div class="nav-controls">
-        <p-button 
-          icon="pi pi-chevron-left"
-          severity="secondary"
-          [outlined]="true"
-          mwlCalendarPreviousView
-          [view]="view"
-          [(viewDate)]="viewDate"
-          (viewDateChange)="previousView()"
-          pTooltip="Previous">
-        </p-button>
-        
-        <p-button 
-          label="Today"
-          severity="secondary"
-          [outlined]="true"
-          mwlCalendarToday
-          [(viewDate)]="viewDate"
-          (click)="goToToday()"
-          class="mx-2">
-        </p-button>
-        
-        <p-button 
-          icon="pi pi-chevron-right"
-          severity="secondary"
-          [outlined]="true"
-          mwlCalendarNextView
-          [view]="view"
-          [(viewDate)]="viewDate"
-          (viewDateChange)="nextView()"
-          pTooltip="Next">
-        </p-button>
-      </div>
-
-      <!-- Current Date -->
-      <div class="current-date">
-        <h3>{{ viewDate | calendarDate:(view + 'ViewTitle'):'en' }}</h3>
-      </div>
-
-      <!-- View Toggle -->
-      <div class="view-controls">
-        <p-button 
-          label="Month"
-          [severity]="view === CalendarView.Month ? 'primary' : 'secondary'"
-          [outlined]="view !== CalendarView.Month"
-          (onClick)="setView(CalendarView.Month)"
-          class="mr-1">
-        </p-button>
-        <p-button 
-          label="Week"
-          [severity]="view === CalendarView.Week ? 'primary' : 'secondary'"
-          [outlined]="view !== CalendarView.Week"
-          (onClick)="setView(CalendarView.Week)"
-          class="mr-1">
-        </p-button>
-        <p-button 
-          label="Day"
-          [severity]="view === CalendarView.Day ? 'primary' : 'secondary'"
-          [outlined]="view !== CalendarView.Day"
-          (onClick)="setView(CalendarView.Day)">
-        </p-button>
-      </div>
+  <div class="row">
+    <!-- Calendar Column -->
+    <div class="col-md-6 col-sm-12">
+      <app-job-calendar
+        [jobs]="jobs"
+        [loading]="loading"
+        (eventClicked)="onEventClicked($event)"
+        (newJobRequested)="onCreateNewJob()"
+        (viewChanged)="onCalendarViewChanged($event)"
+        (dateChanged)="onCalendarDateChanged($event)">
+      </app-job-calendar>
     </div>
 
-    <!-- Status Legend -->
-    <div class="status-legend">
-      <span class="legend-label">Status Legend:</span>
-      <p-tag 
-        [value]="getStatusLabel(Status.PENDING)" 
-        [severity]="getStatusSeverity(Status.PENDING)"
-        class="mr-2">
-      </p-tag>
-      <p-tag 
-        [value]="getStatusLabel(Status.IN_PROGRESS)" 
-        [severity]="getStatusSeverity(Status.IN_PROGRESS)"
-        class="mr-2">
-      </p-tag>
-      <p-tag 
-        [value]="getStatusLabel(Status.COMPLETED)" 
-        [severity]="getStatusSeverity(Status.COMPLETED)">
-      </p-tag>
-    </div>
-  </p-card>
+    <!-- Jobs Summary Column -->
+    <div class="col-md-6 col-sm-12">
+      <!-- Current View Info -->
+      <p-card title="Current View Summary" class="view-summary-card mb-3">
+        <div class="view-info">
+          <h4>{{ currentViewLabel }}</h4>
+          <p>Total jobs in view: {{ totalJobsInView }}</p>
+        </div>
+        <div class="status-summary">
+          <div class="status-item">
+            <p-tag value="Pending" severity="warning"></p-tag>
+            <span class="count">{{ pendingJobsCount }}</span>
+          </div>
+          <div class="status-item">
+            <p-tag value="In Progress" severity="info"></p-tag>
+            <span class="count">{{ ongoingJobsCount }}</span>
+          </div>
+          <div class="status-item">
+            <p-tag value="Completed" severity="success"></p-tag>
+            <span class="count">{{ completedJobsCount }}</span>
+          </div>
+        </div>
+      </p-card>
 
-  <!-- Calendar -->
-  <p-card class="calendar-content">
-    <div [ngSwitch]="view" class="calendar-wrapper">
-      <mwl-calendar-month-view
-        *ngSwitchCase="CalendarView.Month"
-        [viewDate]="viewDate"
-        [events]="events"
-        [refresh]="refresh"
-        [activeDayIsOpen]="activeDayIsOpen"
-        (dayClicked)="dayClicked({ date: $event.day.date, events: $event.day.events })"
-        (eventClicked)="handleEvent('Clicked', $event.event)"
-        class="calendar-view">
-      </mwl-calendar-month-view>
-      
-      <mwl-calendar-week-view
-        *ngSwitchCase="CalendarView.Week"
-        [viewDate]="viewDate"
-        [events]="events"
-        [refresh]="refresh"
-        (eventClicked)="handleEvent('Clicked', $event.event)"
-        class="calendar-view">
-      </mwl-calendar-week-view>
-      
-      <mwl-calendar-day-view
-        *ngSwitchCase="CalendarView.Day"
-        [viewDate]="viewDate"
-        [events]="events"
-        [refresh]="refresh"
-        (eventClicked)="handleEvent('Clicked', $event.event)"
-        class="calendar-view">
-      </mwl-calendar-day-view>
+      <!-- Ongoing Jobs in Current View -->
+      <p-card title="Ongoing Jobs in Current View" class="ongoing-jobs-card">
+        <ng-container *ngIf="ongoingJobs.length; else noOngoingJobs">
+          <ul class="ongoing-jobs-list">
+            <li *ngFor="let job of ongoingJobs" class="job-item">
+              <div class="job-title">{{ job.title }}</div>
+              <div class="job-client">{{ getClientName(job.client?.id) }}</div>
+              <div class="job-due-date" *ngIf="job.due_date">
+                Due: {{ job.due_date }}
+              </div>
+              <div class="job-status">
+                <p-tag 
+                  [value]="job.status" 
+                  [severity]="getStatusSeverity(job.status)">
+                </p-tag>
+              </div>
+            </li>
+          </ul>
+        </ng-container>
+        <ng-template #noOngoingJobs>
+          <p class="no-jobs-message">No ongoing jobs in the current view period.</p>
+        </ng-template>
+      </p-card>
+
+      <!-- Pending Jobs in Current View -->
+      <p-card title="Pending Jobs in Current View" class="pending-jobs-card mt-3" *ngIf="pendingJobsCount > 0">
+        <ul class="pending-jobs-list">
+          <li *ngFor="let job of pendingJobs" class="job-item">
+            <div class="job-title">{{ job.title }}</div>
+            <div class="job-client">{{ getClientName(job.client?.id) }}</div>
+            <div class="job-due-date" *ngIf="job.due_date">
+              Due: {{ job.due_date }}
+            </div>
+            <div class="job-status">
+              <p-tag 
+                [value]="job.status" 
+                [severity]="getStatusSeverity(job.status)">
+              </p-tag>
+            </div>
+          </li>
+        </ul>
+      </p-card>
     </div>
-  </p-card>
+  </div>
 </div>
