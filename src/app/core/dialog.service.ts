@@ -20,6 +20,20 @@ export interface JobDialogData {
   isEdit?: boolean;
 }
 
+export interface PomodoroDialogData {
+  // No specific data needed since config is handled by ConfigService
+}
+
+export interface PomodoroSession {
+  type: 'work' | 'shortBreak' | 'longBreak';
+  duration: number;
+  remaining: number;
+  isRunning: boolean;
+  isPaused: boolean;
+  currentRound: number;
+  completedPomodoros: number;
+}
+
 export interface DialogResult<T = any> {
   success: boolean;
   data?: T;
@@ -27,7 +41,7 @@ export interface DialogResult<T = any> {
 }
 
 export interface DialogState {
-  type: 'client' | 'job' | null;
+  type: 'client' | 'job' | 'pomodoro' | null;
   visible: boolean;
   config: DialogConfig;
   data: any;
@@ -81,6 +95,27 @@ export class DialogService {
 
       this.dialogState.next({
         type: 'job',
+        visible: true,
+        config: defaultConfig,
+        data,
+        resolve
+      });
+    });
+  }
+
+  openPomodoroDialog(data: PomodoroDialogData = {}, config: Partial<DialogConfig> = {}): Promise<DialogResult> {
+    return new Promise((resolve) => {
+      const defaultConfig: DialogConfig = {
+        title: 'Pomodoro Timer',
+        width: '50vw',
+        modal: true,
+        closable: true,
+        dismissableMask: false,
+        ...config
+      };
+
+      this.dialogState.next({
+        type: 'pomodoro',
         visible: true,
         config: defaultConfig,
         data,

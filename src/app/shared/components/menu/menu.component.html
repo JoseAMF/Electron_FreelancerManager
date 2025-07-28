@@ -22,6 +22,15 @@
     
     <ng-template #end>
         <div class="flex items-center gap-2">
+            <!-- Pomodoro Icon -->
+            <button 
+                type="button"
+                class="pomodoro-menu-btn"
+                (click)="onOpenPomodoro()"
+                title="Open Pomodoro Timer">
+                <i class="pi pi-clock"></i>
+            </button>
+            
             <p-autoComplete
                 [(ngModel)]="searchQuery"
                 [suggestions]="searchResults"

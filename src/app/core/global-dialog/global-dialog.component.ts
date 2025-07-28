@@ -18,11 +18,14 @@ import { InputNumberModule } from 'primeng/inputnumber';
 import { DatePickerModule } from 'primeng/datepicker';
 import { ConfirmDialog } from 'primeng/confirmdialog';
 import { ToastModule } from 'primeng/toast';
+import { AccordionModule } from 'primeng/accordion';
+import { CheckboxModule } from 'primeng/checkbox';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { FileItem, FileUploaderComponent } from '../../shared/components/file-uploader/file-uploader.component';
 import { Client, Attachment } from '../../../../app/backend/entities';
-import { DialogState, DialogService } from '../dialog.service';
-import { ClientService, JobService, AttachmentService } from '../services';
+import { DialogState, DialogService, PomodoroSession } from '../dialog.service';
+import { ClientService, JobService, AttachmentService, PomodoroService } from '../services';
+import { PomodoroConfig } from '../services/pomodoro.service';
 import { DateUtils } from '../utils';
 
 
@@ -47,7 +50,9 @@ import { DateUtils } from '../utils';
     DatePickerModule,
     ConfirmDialog,
     ToastModule,
-    FileUploaderComponent
+    FileUploaderComponent,
+    AccordionModule,
+    CheckboxModule
   ],
   templateUrl: './global-dialog.component.html',
   styleUrls: ['./global-dialog.component.scss'],
@@ -66,6 +71,12 @@ export class GlobalDialogsComponent implements OnInit, OnDestroy {
   // Forms
   clientForm: FormGroup;
   jobForm: FormGroup;
+  pomodoroConfigForm: FormGroup;
+
+  // Pomodoro data
+  currentSession!: PomodoroSession;
+  currentConfig!: PomodoroConfig;
+  circumference = 2 * Math.PI * 45; // radius = 45
 
   // Data
   clients: Client[] = [];
@@ -87,12 +98,14 @@ export class GlobalDialogsComponent implements OnInit, OnDestroy {
     private clientService: ClientService,
     private jobService: JobService,
     private attachmentService: AttachmentService,
+    private pomodoroService: PomodoroService,
     private confirmationService: ConfirmationService,
     private messageService: MessageService,
     private cdr: ChangeDetectorRef
   ) {
     this.clientForm = this.createClientForm();
     this.jobForm = this.createJobForm();
+    this.pomodoroConfigForm = this.createPomodoroConfigForm();
   }
 
   ngOnInit() {
@@ -105,6 +118,22 @@ export class GlobalDialogsComponent implements OnInit, OnDestroy {
           await this.initializeDialog(state);
         }
         
+        this.cdr.detectChanges();
+      });
+
+    // Subscribe to Pomodoro service state
+    this.pomodoroService.session$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(session => {
+        this.currentSession = session;
+        this.cdr.detectChanges();
+      });
+
+    this.pomodoroService.config$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(config => {
+        this.currentConfig = config;
+        this.updatePomodoroConfigForm(config);
         this.cdr.detectChanges();
       });
 
@@ -121,6 +150,8 @@ export class GlobalDialogsComponent implements OnInit, OnDestroy {
       this.initializeClientDialog();
     } else if (state.type === 'job') {
       await this.initializeJobDialog();
+    } else if (state.type === 'pomodoro') {
+      this.initializePomodoroDialog();
     }
   }
 
@@ -161,6 +192,13 @@ export class GlobalDialogsComponent implements OnInit, OnDestroy {
     }
   }
 
+  private initializePomodoroDialog() {
+    // Initialize current session and config from service
+    this.currentSession = this.pomodoroService.getSession();
+    this.currentConfig = this.pomodoroService.getConfig();
+    this.updatePomodoroConfigForm(this.currentConfig);
+  }
+
   // Form Creation
   private createClientForm(): FormGroup {
     return this.fb.group({
@@ -180,6 +218,24 @@ export class GlobalDialogsComponent implements OnInit, OnDestroy {
       client: [null, [Validators.required]],
       due_date: [null, [Validators.required]]
     });
+  }
+
+  private createPomodoroConfigForm(): FormGroup {
+    return this.fb.group({
+      workDuration: [25, [Validators.required, Validators.min(1), Validators.max(60)]],
+      shortBreakDuration: [5, [Validators.required, Validators.min(1), Validators.max(30)]],
+      longBreakDuration: [15, [Validators.required, Validators.min(1), Validators.max(60)]],
+      longBreakInterval: [4, [Validators.required, Validators.min(2), Validators.max(10)]],
+      autoStartBreaks: [false],
+      autoStartPomodoros: [false],
+      soundEnabled: [true],
+      notificationsEnabled: [true],
+      napalm: [false]
+    });
+  }
+
+  private updatePomodoroConfigForm(config: PomodoroConfig): void {
+    this.pomodoroConfigForm.patchValue(config, { emitEvent: false });
   }
 
   // Data Loading
@@ -412,5 +468,90 @@ export class GlobalDialogsComponent implements OnInit, OnDestroy {
 
   private capitalizeFirst(str: string): string {
     return str.charAt(0).toUpperCase() + str.slice(1).replace('_', ' ');
+  }
+
+  // Pomodoro Timer Methods
+  toggleTimer(): void {
+    if (this.currentSession.isRunning) {
+      this.pomodoroService.pauseTimer();
+    } else {
+      this.pomodoroService.startTimer();
+    }
+  }
+
+  resetTimer(): void {
+    this.pomodoroService.resetTimer();
+  }
+
+  skipSession(): void {
+    this.pomodoroService.skipSession();
+  }
+
+  resetPomodoro(): void {
+    this.pomodoroService.resetPomodoro();
+  }
+
+  async resetPomodoroConfig(): Promise<void> {
+    try {
+      await this.pomodoroService.resetConfigToDefaults();
+      this.messageService.add({
+        severity: 'success',
+        summary: 'Settings Reset',
+        detail: 'Pomodoro settings have been reset to defaults'
+      });
+    } catch (error) {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'Failed to reset Pomodoro settings'
+      });
+    }
+  }
+
+  async applySettings(): Promise<void> {
+    if (this.pomodoroConfigForm.valid) {
+      try {
+        const config = this.pomodoroConfigForm.value;
+        await this.pomodoroService.updateConfig(config);
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Settings Applied',
+          detail: 'Pomodoro settings have been updated successfully'
+        });
+      } catch (error) {
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'Failed to save Pomodoro settings'
+        });
+      }
+    }
+  }
+
+  // Pomodoro Utility Methods
+  formatTime(seconds: number): string {
+    return this.pomodoroService.formatTime(seconds);
+  }
+
+  getSessionTypeLabel(type: string): string {
+    return this.pomodoroService.getSessionTypeLabel(type as any);
+  }
+
+  getProgressColor(): string {
+    switch (this.currentSession.type) {
+      case 'work':
+        return '#e74c3c'; // Red for work
+      case 'shortBreak':
+        return '#f39c12'; // Orange for short break
+      case 'longBreak':
+        return '#27ae60'; // Green for long break
+      default:
+        return '#3498db'; // Blue default
+    }
+  }
+
+  get strokeDashoffset(): number {
+    const progress = this.pomodoroService.getProgress();
+    return this.circumference - (progress / 100) * this.circumference;
   }
 }

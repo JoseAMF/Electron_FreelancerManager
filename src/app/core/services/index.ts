@@ -5,3 +5,4 @@ export { JobService } from './job.service';
 export { AttachmentService } from './attachment.service';
 export { PaymentService } from './payment.service';
 export { ConfigService } from './config.service';
+export { PomodoroService } from './pomodoro.service';

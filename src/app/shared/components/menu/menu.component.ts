@@ -11,6 +11,7 @@ import { ButtonModule } from 'primeng/button';
 import { JobService, ClientService } from '../../../core/services';
 import { AutoCompleteModule, AutoCompleteSelectEvent } from 'primeng/autocomplete';
 import { FormsModule } from '@angular/forms';
+import { DialogService } from '../../../core/dialog.service';
 
 interface SearchResult {
   type: 'job' | 'client';
@@ -35,7 +36,8 @@ export class MenuComponent implements OnInit {
   constructor(
     private router: Router,
     private jobService: JobService,
-    private clientService: ClientService
+    private clientService: ClientService,
+    private dialogService: DialogService
   ) {}
 
   ngOnInit() {
@@ -113,6 +115,10 @@ export class MenuComponent implements OnInit {
         { id: searchResult.id } : {}
     });
     this.searchQuery = '';
+  }
+
+  async onOpenPomodoro(): Promise<void> {
+    await this.dialogService.openPomodoroDialog();
   }
 
   getSearchItemTemplate(result: SearchResult): string {

@@ -286,6 +286,241 @@
   </ng-template>
 </p-dialog>
 
+<!-- Pomodoro Dialog -->
+<p-dialog 
+  [header]="dialogState.config.title" 
+  [(visible)]="dialogState.visible"
+  [modal]="dialogState.config.modal"
+  [style]="{ width: dialogState.config.width }"
+  [closable]="dialogState.config.closable"
+  [dismissableMask]="dialogState.config.dismissableMask"
+  *ngIf="dialogState.type === 'pomodoro'"
+  styleClass="pomodoro-dialog">
+  
+  <div class="pomodoro-container">
+    <!-- Timer Display -->
+    <div class="timer-section">
+      <div class="session-info">
+        <h3>{{ getSessionTypeLabel(currentSession.type) }}</h3>
+        <p class="round-info">Round {{ currentSession.currentRound }} • {{ currentSession.completedPomodoros }} completed</p>
+      </div>
+      
+      <div class="timer-display">
+        <div class="timer-circle">
+          <svg viewBox="0 0 100 100" class="progress-ring">
+            <circle 
+              cx="50" 
+              cy="50" 
+              r="45" 
+              fill="none" 
+              stroke="var(--p-surface-200)" 
+              stroke-width="8"/>
+            <circle 
+              cx="50" 
+              cy="50" 
+              r="45" 
+              fill="none" 
+              [attr.stroke]="getProgressColor()" 
+              stroke-width="8"
+              stroke-linecap="round"
+              [style.stroke-dasharray]="circumference"
+              [style.stroke-dashoffset]="strokeDashoffset"
+              transform="rotate(-90 50 50)"/>
+          </svg>
+          <div class="timer-text">
+            <span class="time">{{ formatTime(currentSession.remaining) }}</span>
+            <span class="session-type">{{ currentSession.type === 'work' ? 'FOCUS' : 'BREAK' }}</span>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Timer Controls -->
+      <div class="timer-controls">
+        <button 
+          pButton 
+          type="button" 
+          [icon]="currentSession.isRunning ? 'pi pi-pause' : 'pi pi-play'"
+          [label]="currentSession.isRunning ? 'Pause' : (currentSession.isPaused ? 'Resume' : 'Start')"
+          severity="primary"
+          class="control-btn"
+          (click)="toggleTimer()">
+        </button>
+        
+        <button 
+          pButton 
+          type="button" 
+          icon="pi pi-refresh" 
+          label="Reset"
+          severity="secondary"
+          class="control-btn"
+          (click)="resetTimer()">
+        </button>
+        
+        <button 
+          pButton 
+          type="button" 
+          icon="pi pi-step-forward" 
+          label="Skip"
+          severity="info"
+          class="control-btn"
+          (click)="skipSession()">
+        </button>
+      </div>
+    </div>
+    
+    <!-- Settings Section -->
+    <div class="settings-section">
+      <p-accordion>
+        <p-accordionTab header="Timer Settings" [selected]="false">
+          <form [formGroup]="pomodoroConfigForm" class="config-form">
+            <!-- Duration Settings -->
+            <div class="config-group">
+              <h4>Duration Settings (minutes)</h4>
+              <div class="duration-controls">
+                <div class="duration-field">
+                  <label for="workDuration">Work Session</label>
+                  <p-inputnumber
+                    inputId="workDuration"
+                    formControlName="workDuration"
+                    [min]="1"
+                    [max]="60"
+                    [step]="1">
+                  </p-inputnumber>
+                </div>
+                
+                <div class="duration-field">
+                  <label for="shortBreakDuration">Short Break</label>
+                  <p-inputnumber
+                    inputId="shortBreakDuration"
+                    formControlName="shortBreakDuration"
+                    [min]="1"
+                    [max]="30"
+                    [step]="1">
+                  </p-inputnumber>
+                </div>
+                
+                <div class="duration-field">
+                  <label for="longBreakDuration">Long Break</label>
+                  <p-inputnumber
+                    inputId="longBreakDuration"
+                    formControlName="longBreakDuration"
+                    [min]="1"
+                    [max]="60"
+                    [step]="1">
+                  </p-inputnumber>
+                </div>
+                
+                <div class="duration-field">
+                  <label for="longBreakInterval">Long Break Every</label>
+                  <p-inputnumber
+                    inputId="longBreakInterval"
+                    formControlName="longBreakInterval"
+                    [min]="2"
+                    [max]="10"
+                    [step]="1"
+                    suffix=" pomodoros">
+                  </p-inputnumber>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Auto-start Settings -->
+            <div class="config-group">
+              <h4>Auto-start Settings</h4>
+              <div class="checkbox-controls">
+                <div class="checkbox-field">
+                  <p-checkbox
+                    inputId="autoStartBreaks"
+                    formControlName="autoStartBreaks"
+                    [binary]="true">
+                  </p-checkbox>
+                  <label for="autoStartBreaks">Auto-start breaks</label>
+                </div>
+                
+                <div class="checkbox-field">
+                  <p-checkbox
+                    inputId="autoStartPomodoros"
+                    formControlName="autoStartPomodoros"
+                    [binary]="true">
+                  </p-checkbox>
+                  <label for="autoStartPomodoros">Auto-start work sessions</label>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Notification Settings -->
+            <div class="config-group">
+              <h4>Notification Settings</h4>
+              <div class="checkbox-controls">
+                <div class="checkbox-field">
+                  <p-checkbox
+                    inputId="soundEnabled"
+                    formControlName="soundEnabled"
+                    [binary]="true">
+                  </p-checkbox>
+                  <label for="soundEnabled">Enable sound notifications</label>
+                </div>
+                
+                <div class="checkbox-field">
+                  <p-checkbox
+                    inputId="notificationsEnabled"
+                    formControlName="notificationsEnabled"
+                    [binary]="true">
+                  </p-checkbox>
+                  <label for="notificationsEnabled">Enable desktop notifications</label>
+                </div>
+                
+                <div class="checkbox-field">
+                  <p-checkbox
+                    inputId="napalm"
+                    formControlName="napalm"
+                    [binary]="true">
+                  </p-checkbox>
+                  <label for="napalm">Napalm - Custom alert sound</label>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Action Buttons -->
+            <div class="config-actions">
+              <button 
+                pButton 
+                type="button" 
+                label="Apply Settings" 
+                icon="pi pi-check"
+                severity="primary"
+                (click)="applySettings()">
+              </button>
+              
+              <button 
+                pButton 
+                type="button" 
+                label="Reset Timer" 
+                icon="pi pi-refresh"
+                severity="secondary"
+                (click)="resetPomodoro()">
+              </button>
+              
+              <button 
+                pButton 
+                type="button" 
+                label="Reset All Settings" 
+                icon="pi pi-undo"
+                severity="danger"
+                (click)="resetPomodoroConfig()">
+              </button>
+            </div>
+          </form>
+        </p-accordionTab>
+      </p-accordion>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <button pButton type="button" severity="secondary" label="Close" icon="pi pi-times" (click)="cancelDialog()"></button>
+  </ng-template>
+</p-dialog>
+
 <!-- Global Toast and Confirmation -->
 <p-confirmdialog />
 <p-toast />

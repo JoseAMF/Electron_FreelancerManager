@@ -1,0 +1,31 @@
+.pomodoro-menu-btn {
+  background: none;
+  border: none;
+  padding: 8px;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  i {
+    font-size: 1.2rem;
+    color: var(--text-color-secondary);
+    opacity: 0.6;
+    transition: all 0.2s ease;
+  }
+  
+  &:hover {
+    background-color: var(--surface-hover);
+    
+    i {
+      opacity: 1;
+      color: var(--primary-color);
+    }
+  }
+  
+  &:active {
+    transform: scale(0.95);
+  }
+}
