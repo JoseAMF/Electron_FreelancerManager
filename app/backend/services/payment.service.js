@@ -25,8 +25,8 @@ class PaymentService {
     getAllPayments() {
         return __awaiter(this, void 0, void 0, function* () {
             return yield this.paymentRepository.find({
-                relations: ['job', 'attachment'],
-                order: { date: 'DESC' }
+                relations: ['job', 'attachments'],
+                order: { created_at: 'DESC' }
             });
         });
     }
@@ -34,7 +34,7 @@ class PaymentService {
         return __awaiter(this, void 0, void 0, function* () {
             return yield this.paymentRepository.findOne({
                 where: { id },
-                relations: ['job', 'attachment']
+                relations: ['job', 'attachments']
             });
         });
     }
@@ -42,8 +42,8 @@ class PaymentService {
         return __awaiter(this, void 0, void 0, function* () {
             return yield this.paymentRepository.find({
                 where: { job: { id: jobId } },
-                relations: ['job', 'attachment'],
-                order: { date: 'DESC' }
+                relations: ['job', 'attachments'],
+                order: { created_at: 'DESC' }
             });
         });
     }
@@ -52,12 +52,12 @@ class PaymentService {
             return yield this.paymentRepository
                 .createQueryBuilder('payment')
                 .leftJoinAndSelect('payment.job', 'job')
-                .leftJoinAndSelect('payment.attachment', 'attachment')
-                .where('payment.date >= :startDate AND payment.date <= :endDate', {
+                .leftJoinAndSelect('payment.attachments', 'attachments')
+                .where('payment.created_at >= :startDate AND payment.created_at <= :endDate', {
                 startDate,
                 endDate
             })
-                .orderBy('payment.date', 'DESC')
+                .orderBy('payment.created_at', 'DESC')
                 .getMany();
         });
     }

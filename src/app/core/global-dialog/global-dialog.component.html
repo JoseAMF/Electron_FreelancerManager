@@ -270,6 +270,176 @@
         (filesChanged)="onFilesChanged($event)">
       </app-file-uploader>
     </div>
+
+    <!-- Payment Management Section -->
+    <div class="field-row full-width">
+      <p-accordion class="payment-accordion">
+        <p-accordionTab [selected]="false">
+          <ng-template pTemplate="header">
+            <div class="payment-header">
+              <span class="header-title">
+                <i class="pi pi-credit-card mr-2"></i>
+                Payments
+              </span>
+              <p-badge 
+                [value]="currentJobPayments.length || 0" 
+                severity="info" 
+                *ngIf="currentJobPayments.length"
+                class="ml-2">
+              </p-badge>
+            </div>
+          </ng-template>
+
+          <div class="payment-content">
+            <!-- Add Payment Form -->
+            <div class="add-payment-form" *ngIf="showAddPaymentForm">
+              <form [formGroup]="paymentForm" class="payment-form">
+                <div class="payment-fields">
+                  <div class="field-wrapper">
+                    <p-floatlabel>
+                      <p-inputnumber
+                        inputId="payment-amount"
+                        formControlName="amount"
+                        mode="currency"
+                        currency="USD"
+                        locale="en-US"
+                        [class.ng-invalid]="isFieldInvalid(paymentForm, 'amount')"
+                        [style]="{ width: '100%' }">
+                      </p-inputnumber>
+                      <label for="payment-amount">Amount *</label>
+                    </p-floatlabel>
+                    <small class="error-message" *ngIf="isFieldInvalid(paymentForm, 'amount')">
+                      {{ getFieldError(paymentForm, 'amount') }}
+                    </small>
+                  </div>
+
+                  <div class="field-wrapper">
+                    <p-floatlabel>
+                      <p-datepicker 
+                        inputId="payment-date" 
+                        formControlName="payment_date"
+                        [showIcon]="true"
+                        dateFormat="dd/mm/yy"
+                        [class.ng-invalid]="isFieldInvalid(paymentForm, 'payment_date')"
+                        placeholder="Select payment date"
+                      />
+                      <label for="payment-date">Payment Date *</label>
+                    </p-floatlabel>
+                    <small class="error-message" *ngIf="isFieldInvalid(paymentForm, 'payment_date')">
+                      {{ getFieldError(paymentForm, 'payment_date') }}
+                    </small>
+                  </div>
+                </div>
+
+                <div class="field-wrapper full-width">
+                  <p-floatlabel>
+                    <textarea 
+                      pInputTextarea
+                      inputId="payment-description" 
+                      formControlName="description"
+                      rows="2"
+                      [style]="{ width: '100%' }">
+                    </textarea>
+                    <label for="payment-description">Description</label>
+                  </p-floatlabel>
+                </div>
+
+                <!-- Payment Attachments -->
+                <div class="field-wrapper full-width">
+                  <label class="field-label">Payment Receipts & Documents</label>
+                  <app-file-uploader
+                    [readonly]="false"
+                    [multiple]="true"
+                    [initialFiles]="currentPaymentAttachments"
+                    (filesChanged)="onPaymentFilesChanged($event)">
+                  </app-file-uploader>
+                </div>
+
+                <div class="payment-form-actions">
+                  <button 
+                    pButton 
+                    type="button" 
+                    label="Cancel" 
+                    severity="secondary"
+                    size="small"
+                    (click)="cancelAddPayment()">
+                  </button>
+                  <button 
+                    pButton 
+                    type="button" 
+                    label="Add Payment" 
+                    severity="primary"
+                    size="small"
+                    [disabled]="paymentForm.invalid"
+                    (click)="addPayment()">
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            <!-- Add Payment Button -->
+            <div class="add-payment-button" *ngIf="!showAddPaymentForm">
+              <button 
+                pButton 
+                type="button" 
+                label="Add Payment" 
+                icon="pi pi-plus"
+                severity="primary"
+                size="small"
+                [outlined]="true"
+                (click)="showAddPaymentForm = true">
+              </button>
+            </div>
+
+            <!-- Payments List -->
+            <div class="payments-list" *ngIf="currentJobPayments?.length">
+              <div class="payment-item" *ngFor="let payment of currentJobPayments; let i = index">
+                <div class="payment-header">
+                  <div class="payment-info">
+                    <div class="payment-amount">{{ payment.amount | currency:'USD':'symbol':'1.2-2' }}</div>
+                    <div class="payment-date">{{ payment.payment_date || 'No date' }}</div>
+                  </div>
+                  <div class="payment-actions">
+                    <button 
+                      pButton 
+                      icon="pi pi-pencil" 
+                      [text]="true"
+                      severity="info"
+                      size="small"
+                      pTooltip="Edit Payment"
+                      (click)="editPayment(payment, i)">
+                    </button>
+                    <button 
+                      pButton 
+                      icon="pi pi-trash" 
+                      [text]="true"
+                      severity="danger"
+                      size="small"
+                      pTooltip="Delete Payment"
+                      (click)="deletePayment(payment, i)">
+                    </button>
+                  </div>
+                </div>
+                <div class="payment-description" *ngIf="payment.description">
+                  {{ payment.description }}
+                </div>
+                <div class="payment-attachments" *ngIf="payment.attachments?.length">
+                  <div class="attachment-count">
+                    <i class="pi pi-paperclip mr-1"></i>
+                    {{ payment.attachments?.length || 0 }} attachment(s)
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- No Payments Message -->
+            <div class="no-payments" *ngIf="!currentJobPayments?.length && !showAddPaymentForm">
+              <p class="text-muted">No payments registered for this job.</p>
+            </div>
+          </div>
+        </p-accordionTab>
+      </p-accordion>
+    </div>
   </form>
 
   <ng-template pTemplate="footer">

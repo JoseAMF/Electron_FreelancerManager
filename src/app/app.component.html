@@ -1,3 +1,35 @@
-<app-menu></app-menu>
-<router-outlet></router-outlet>
-<app-global-dialogs></app-global-dialogs>
+<!-- Loading State -->
+<div *ngIf="(isInitializing$ | async)" class="loading-container">
+  <div class="loading-content">
+    <p-progressSpinner 
+      strokeWidth="4" 
+      fill="transparent" 
+      animationDuration="1s">
+    </p-progressSpinner>
+    <h3>Initializing Application...</h3>
+    <p>Setting up database and services</p>
+  </div>
+</div>
+
+<!-- Error State -->
+<div *ngIf="(initializationError$ | async) as error" class="error-container">
+  <div class="error-content">
+    <i class="pi pi-exclamation-triangle error-icon"></i>
+    <h3>Initialization Failed</h3>
+    <p>{{ error }}</p>
+    <button 
+      class="retry-button" 
+      (click)="retryInitialization()"
+      type="button">
+      <i class="pi pi-refresh"></i>
+      Retry
+    </button>
+  </div>
+</div>
+
+<!-- Main Application - Only show when initialized -->
+<ng-container *ngIf="(isInitialized$ | async)">
+  <app-menu></app-menu>
+  <router-outlet></router-outlet>
+  <app-global-dialogs></app-global-dialogs>
+</ng-container>

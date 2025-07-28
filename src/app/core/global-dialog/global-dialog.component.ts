@@ -20,11 +20,12 @@ import { ConfirmDialog } from 'primeng/confirmdialog';
 import { ToastModule } from 'primeng/toast';
 import { AccordionModule } from 'primeng/accordion';
 import { CheckboxModule } from 'primeng/checkbox';
+import { BadgeModule } from 'primeng/badge';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { FileItem, FileUploaderComponent } from '../../shared/components/file-uploader/file-uploader.component';
-import { Client, Attachment } from '../../../../app/backend/entities';
+import { Client, Attachment, Payment } from '../../../../app/backend/entities';
 import { DialogState, DialogService, PomodoroSession } from '../dialog.service';
-import { ClientService, JobService, AttachmentService, PomodoroService } from '../services';
+import { ClientService, JobService, AttachmentService, PomodoroService, PaymentService } from '../services';
 import { PomodoroConfig } from '../services/pomodoro.service';
 import { DateUtils } from '../utils';
 
@@ -52,7 +53,8 @@ import { DateUtils } from '../utils';
     ToastModule,
     FileUploaderComponent,
     AccordionModule,
-    CheckboxModule
+    CheckboxModule,
+    BadgeModule
   ],
   templateUrl: './global-dialog.component.html',
   styleUrls: ['./global-dialog.component.scss'],
@@ -72,6 +74,7 @@ export class GlobalDialogsComponent implements OnInit, OnDestroy {
   clientForm: FormGroup;
   jobForm: FormGroup;
   pomodoroConfigForm: FormGroup;
+  paymentForm: FormGroup;
 
   // Pomodoro data
   currentSession!: PomodoroSession;
@@ -82,7 +85,12 @@ export class GlobalDialogsComponent implements OnInit, OnDestroy {
   clients: Client[] = [];
   filteredClients: Client[] = [];
   selectedFiles: FileItem[] = [];
+  selectedPaymentFiles: FileItem[] = [];
   currentJobAttachments: Attachment[] = [];
+  currentJobPayments: Payment[] = [];
+  currentPaymentAttachments: Attachment[] = [];
+  editingPaymentIndex: number = -1;
+  showAddPaymentForm = false;
 
   // Options
   statusOptions = [
@@ -98,6 +106,7 @@ export class GlobalDialogsComponent implements OnInit, OnDestroy {
     private clientService: ClientService,
     private jobService: JobService,
     private attachmentService: AttachmentService,
+    private paymentService: PaymentService,
     private pomodoroService: PomodoroService,
     private confirmationService: ConfirmationService,
     private messageService: MessageService,
@@ -106,6 +115,7 @@ export class GlobalDialogsComponent implements OnInit, OnDestroy {
     this.clientForm = this.createClientForm();
     this.jobForm = this.createJobForm();
     this.pomodoroConfigForm = this.createPomodoroConfigForm();
+    this.paymentForm = this.createPaymentForm();
   }
 
   ngOnInit() {
@@ -184,12 +194,16 @@ export class GlobalDialogsComponent implements OnInit, OnDestroy {
         due_date: DateUtils.parseStringToDate(jobData.job.due_date!)
       });
       await this.loadJobAttachments(jobData.job.id!);
+      await this.loadJobPayments(jobData.job.id!);
     } else {
       // Add mode
       this.jobForm.reset({ status: 'pending', price: 0 });
       this.selectedFiles = [];
       this.currentJobAttachments = [];
+      this.currentJobPayments = [];
     }
+    // Reset payment form
+    this.resetPaymentForm();
   }
 
   private initializePomodoroDialog() {
@@ -234,6 +248,14 @@ export class GlobalDialogsComponent implements OnInit, OnDestroy {
     });
   }
 
+  private createPaymentForm(): FormGroup {
+    return this.fb.group({
+      amount: [null, [Validators.required, Validators.min(0.01)]],
+      payment_date: ['', [Validators.required]],
+      description: ['']
+    });
+  }
+
   private updatePomodoroConfigForm(config: PomodoroConfig): void {
     this.pomodoroConfigForm.patchValue(config, { emitEvent: false });
   }
@@ -254,6 +276,16 @@ export class GlobalDialogsComponent implements OnInit, OnDestroy {
     } catch (error) {
       console.error('Error loading job attachments:', error);
       this.currentJobAttachments = [];
+    }
+  }
+
+  private async loadJobPayments(jobId: number): Promise<void> {
+    try {
+      const payments = await this.paymentService.getPaymentsByJob(jobId);
+      this.currentJobPayments = payments;
+    } catch (error) {
+      console.error('Error loading job payments:', error);
+      this.currentJobPayments = [];
     }
   }
 
@@ -369,10 +401,16 @@ export class GlobalDialogsComponent implements OnInit, OnDestroy {
             if (this.selectedFiles.length > 0) {
               await this.uploadFiles(this.dialogState.data.job.id, this.selectedFiles);
             }
+            // Save payments and their attachments
+            await this.saveJobPayments(this.dialogState.data.job.id);
           } else {
             result = await this.jobService.createJob(formData);
             if (this.selectedFiles.length > 0) {
               await this.uploadFiles(result.id!, this.selectedFiles);
+            }
+            // Save payments and their attachments
+            if (result.id) {
+              await this.saveJobPayments(result.id);
             }
           }
 
@@ -409,6 +447,174 @@ export class GlobalDialogsComponent implements OnInit, OnDestroy {
 
   onFilesChanged(files: FileItem[]) {
     this.selectedFiles = files;
+  }
+
+  // Payment Management Methods
+  onPaymentFilesChanged(files: FileItem[]) {
+    this.selectedPaymentFiles = files;
+  }
+
+  async addPayment() {
+    if (this.paymentForm.valid) {
+      const formValue = this.paymentForm.value;
+      
+      // Convert Date object to DD/MM/YYYY string format
+      let paymentDateString = '';
+      if (formValue.payment_date) {
+        if (formValue.payment_date instanceof Date) {
+          paymentDateString = this.formatDateToString(formValue.payment_date);
+        } else {
+          paymentDateString = formValue.payment_date;
+        }
+      }
+
+      try {
+        if (this.editingPaymentIndex >= 0) {
+          // Update existing payment
+          const existingPayment = this.currentJobPayments[this.editingPaymentIndex];
+          existingPayment.amount = formValue.amount;
+          existingPayment.payment_date = paymentDateString;
+          existingPayment.description = formValue.description;
+          
+          // Handle file uploads for editing
+          if (this.selectedPaymentFiles.length > 0) {
+            // For now, just add to the attachments array - real upload happens when job is saved
+            existingPayment.attachments = existingPayment.attachments || [];
+          }
+          
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Success',
+            detail: 'Payment updated successfully'
+          });
+        } else {
+          // Add new payment
+          const newPayment: Partial<Payment> = {
+            amount: formValue.amount,
+            payment_date: paymentDateString,
+            description: formValue.description,
+            attachments: []
+          };
+
+          this.currentJobPayments.push(newPayment as Payment);
+          
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Success',
+            detail: 'Payment added successfully'
+          });
+        }
+        
+        this.resetPaymentForm();
+      } catch (error) {
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'Failed to save payment'
+        });
+      }
+    }
+  }
+
+  editPayment(payment: Payment, index: number) {
+    this.editingPaymentIndex = index;
+    this.paymentForm.patchValue({
+      amount: payment.amount,
+      payment_date: this.parseDateString(payment.payment_date || ''),
+      description: payment.description
+    });
+    this.currentPaymentAttachments = payment.attachments || [];
+    this.selectedPaymentFiles = [];
+    this.showAddPaymentForm = true;
+  }
+
+  deletePayment(payment: Payment, index: number) {
+    this.confirmationService.confirm({
+      message: `Are you sure you want to delete this payment of ${payment.amount}?`,
+      header: 'Delete Payment',
+      icon: 'pi pi-exclamation-triangle',
+      accept: () => {
+        this.currentJobPayments.splice(index, 1);
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Success',
+          detail: 'Payment deleted successfully'
+        });
+      }
+    });
+  }
+
+  cancelAddPayment() {
+    this.resetPaymentForm();
+  }
+
+  private resetPaymentForm() {
+    this.paymentForm.reset();
+    this.currentPaymentAttachments = [];
+    this.selectedPaymentFiles = [];
+    this.editingPaymentIndex = -1;
+    this.showAddPaymentForm = false;
+  }
+
+  private async uploadPaymentFiles(paymentId: number, files: FileItem[]): Promise<void> {
+    if (files.length === 0) return;
+    try {
+      for (const fileItem of files) {
+        if (fileItem.file && !fileItem.isUploaded) {
+          const arrayBuffer = await this.fileToBuffer(fileItem.file);
+          await this.attachmentService.saveFile(fileItem.file.name, arrayBuffer, '', undefined, paymentId);
+        }
+      }
+    } catch (error) {
+      console.error('Payment file upload error:', error);
+      throw error;
+    }
+  }
+
+  private async saveJobPayments(jobId: number): Promise<void> {
+    for (let i = 0; i < this.currentJobPayments.length; i++) {
+      const payment = this.currentJobPayments[i];
+      try {
+        let savedPayment: Payment;
+        
+        if (payment.id) {
+          // Update existing payment
+          const updateData: Partial<Payment> = {
+            amount: payment.amount,
+            payment_date: payment.payment_date,
+            description: payment.description,
+            job: { id: jobId } as any // Set job relationship
+          };
+          const updated = await this.paymentService.updatePayment(payment.id, updateData);
+          if (updated) {
+            savedPayment = updated;
+          } else {
+            throw new Error('Failed to update payment');
+          }
+        } else {
+          // Create new payment
+          const paymentData: Partial<Payment> = {
+            amount: payment.amount,
+            payment_date: payment.payment_date,
+            description: payment.description,
+            job: { id: jobId } as any // Set job relationship
+          };
+          savedPayment = await this.paymentService.createPayment(paymentData);
+        }
+        
+        // Upload payment files if any (for this specific payment during editing)
+        if (this.editingPaymentIndex === i && this.selectedPaymentFiles.length > 0 && savedPayment) {
+          await this.uploadPaymentFiles(savedPayment.id, this.selectedPaymentFiles);
+        }
+      } catch (error) {
+        console.error('Error saving payment:', error);
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Payment Error',
+          detail: 'Some payments failed to save'
+        });
+      }
+    }
   }
 
   private async uploadFiles(jobId: number, files: FileItem[]): Promise<void> {
@@ -553,5 +759,29 @@ export class GlobalDialogsComponent implements OnInit, OnDestroy {
   get strokeDashoffset(): number {
     const progress = this.pomodoroService.getProgress();
     return this.circumference - (progress / 100) * this.circumference;
+  }
+
+  // Date Utility Methods
+  private formatDateToString(date: Date): string {
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear().toString().slice(-2);
+    return `${day}/${month}/${year}`;
+  }
+
+  private parseDateString(dateString: string): Date | null {
+    if (!dateString) return null;
+    
+    const parts = dateString.split('/');
+    if (parts.length !== 3) return null;
+    
+    const day = parseInt(parts[0], 10);
+    const month = parseInt(parts[1], 10) - 1; // Month is 0-indexed
+    const year = parseInt(parts[2], 10);
+    
+    // Handle 2-digit years
+    const fullYear = year < 50 ? 2000 + year : (year < 100 ? 1900 + year : year);
+    
+    return new Date(fullYear, month, day);
   }
 }

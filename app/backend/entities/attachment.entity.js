@@ -35,7 +35,7 @@ __decorate([
     __metadata("design:type", job_entity_1.Job)
 ], Attachment.prototype, "job", void 0);
 __decorate([
-    (0, typeorm_1.ManyToOne)(() => payment_entity_1.Payment, payment => payment.attachment, { nullable: true }),
+    (0, typeorm_1.ManyToOne)(() => payment_entity_1.Payment, payment => payment.attachments, { nullable: true }),
     (0, typeorm_1.JoinColumn)({ name: 'payment_id' }),
     __metadata("design:type", payment_entity_1.Payment)
 ], Attachment.prototype, "payment", void 0);

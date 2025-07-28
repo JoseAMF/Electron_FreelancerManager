@@ -1,5 +1,6 @@
 export { ElectronService } from './electron/electron.service';
 export { BackendService } from './backend/backend.service';
+export { AppInitializationService } from './app-initialization.service';
 export { ClientService } from './client.service';
 export { JobService } from './job.service';
 export { AttachmentService } from './attachment.service';

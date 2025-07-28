@@ -22,14 +22,13 @@ __decorate([
     __metadata("design:type", Number)
 ], Payment.prototype, "amount", void 0);
 __decorate([
-    (0, typeorm_1.OneToOne)(() => attachment_entity_1.Attachment, attachment => attachment.payment, { nullable: true }),
-    (0, typeorm_1.JoinColumn)({ name: 'attachment_id' }),
-    __metadata("design:type", attachment_entity_1.Attachment)
-], Payment.prototype, "attachment", void 0);
+    (0, typeorm_1.OneToMany)(() => attachment_entity_1.Attachment, attachment => attachment.payment),
+    __metadata("design:type", Array)
+], Payment.prototype, "attachments", void 0);
 __decorate([
-    (0, typeorm_1.Column)(),
-    __metadata("design:type", Date)
-], Payment.prototype, "date", void 0);
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", String)
+], Payment.prototype, "payment_date", void 0);
 __decorate([
     (0, typeorm_1.Column)({ nullable: true, type: 'text' }),
     __metadata("design:type", String)

@@ -36,15 +36,8 @@
                         </p-tag>
                     </td>
                     <td>${{ job.price | number:'1.2-2' }}</td>
-                    <td>{{ job.due_date | date: 'dd/MMM/YY' }}</td>
-                    <td>
-                        <span *ngIf="job.completed_date; else noCompletedDate">
-                            {{ job.completed_date | date: 'dd/MMM/YY hh:mm' }}
-                        </span>
-                        <ng-template #noCompletedDate>
-                            <span class="text-muted">-</span>
-                        </ng-template>
-                    </td>
+                    <td>{{ job.due_date || '-' }}</td>
+                    <td>{{ job.completed_date || '-' }}</td>
                     <td>{{ job.created_at | date: 'dd/MMM/YY hh:mm' }}</td>
 
                     <td>

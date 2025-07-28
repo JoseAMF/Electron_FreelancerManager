@@ -51,7 +51,6 @@ export class HomeComponent implements OnInit {
   ) { }
 
   async ngOnInit(): Promise<void> {    
-    await this.backendService.initializeDatabase();
     await this.loadJobsForCurrentView();
   }
 

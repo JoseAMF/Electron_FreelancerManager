@@ -18,7 +18,7 @@ export class Attachment extends BaseEntity {
     @JoinColumn({ name: 'job_id' })
     job?: Job;
 
-    @ManyToOne(() => Payment, payment => payment.attachment, { nullable: true })
+    @ManyToOne(() => Payment, payment => payment.attachments, { nullable: true })
     @JoinColumn({ name: 'payment_id' })
     payment?: Payment;
 }

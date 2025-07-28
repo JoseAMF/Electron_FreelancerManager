@@ -1,4 +1,4 @@
-import { Entity, Column, ManyToOne, OneToOne, JoinColumn } from 'typeorm';
+import { Entity, Column, ManyToOne, OneToMany, JoinColumn } from 'typeorm';
 import { BaseEntity } from "./base.entity";
 import { Job } from "./job.entity";
 import { Attachment } from "./attachment.entity";
@@ -8,12 +8,11 @@ export class Payment extends BaseEntity {
     @Column({ type: 'decimal', precision: 10, scale: 2 })
     amount!: number;
 
-    @OneToOne(() => Attachment, attachment => attachment.payment, { nullable: true })
-    @JoinColumn({ name: 'attachment_id' })
-    attachment?: Attachment;
+    @OneToMany(() => Attachment, attachment => attachment.payment)
+    attachments?: Attachment[];
 
-    @Column()
-    date!: Date;
+    @Column({ nullable: true })
+    payment_date?: string; // Format: DD/MM/YYYY
 
     @Column({ nullable: true, type: 'text' })
     description?: string;
