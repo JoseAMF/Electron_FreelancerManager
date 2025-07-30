@@ -4,7 +4,7 @@ import { Job } from "./job.entity";
 
 @Entity('job_types')
 export class JobType extends BaseEntity {
-    @Column()
+    @Column({ unique: true })
     name!: string;
 
     @Column({ nullable: true, type: 'text' })

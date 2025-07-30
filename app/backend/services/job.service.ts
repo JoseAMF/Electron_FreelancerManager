@@ -215,6 +215,7 @@ export class JobService {
           status: processedData.status,
           price: processedData.price,
           client: processedData.client,
+          job_type: processedData.job_type,
           due_date: processedData.due_date,
           start_date: processedData.start_date,
           completed_date: processedData.completed_date
