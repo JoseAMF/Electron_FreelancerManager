@@ -19,6 +19,7 @@ import { provideAnimationsAsync } from '@angular/platform-browser/animations/asy
 import Aura from '@primeng/themes/aura';
 import { ClientsComponent } from './app/clients/clients.component';
 import { JobsComponent } from './app/jobs/jobs.component';
+import { JobTypesComponent } from './app/job-types/job-types.component';
 import { CalendarModule, DateAdapter } from 'angular-calendar';
 
 // AoT requires an exported function for factories
@@ -50,6 +51,10 @@ bootstrapApplication(AppComponent, {
       {
         path: 'jobs',
         component: JobsComponent
+      },
+      {
+        path: 'job-types',
+        component: JobTypesComponent
       },
       {
         path: 'clients',

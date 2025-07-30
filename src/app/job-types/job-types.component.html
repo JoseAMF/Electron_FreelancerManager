@@ -1,0 +1,75 @@
+<div class="container">
+    <p-panel>
+        <ng-template pTemplate="header">
+            <div class="panel-header">
+                <span class="panel-title">Job Types</span>
+                <p-button 
+                    label="Add Job Type" 
+                    icon="pi pi-plus" 
+                    size="small"
+                    (click)="addJobType()">
+                </p-button>
+            </div>
+        </ng-template>
+        
+        <p-table 
+            [value]="jobTypes" 
+            [paginator]="true" 
+            [rows]="10" 
+            [responsiveLayout]="'scroll'"
+            [loading]="loading">
+            <ng-template pTemplate="header">
+                <tr>
+                    <th pSortableColumn="name">Name <p-sortIcon field="name" /></th>
+                    <th>Description</th>
+                    <th pSortableColumn="base_price">Base Price <p-sortIcon field="base_price" /></th>
+                    <th pSortableColumn="base_hours">Base Hours <p-sortIcon field="base_hours" /></th>
+                    <th>Color</th>
+                    <th pSortableColumn="created_at">Created At <p-sortIcon field="created_at" /></th>
+                    <th>Actions</th>
+                </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-jobType>
+                <tr>
+                    <td>{{ jobType.name }}</td>
+                    <td>{{ jobType.description || '-' }}</td>
+                    <td>{{ formatCurrency(jobType.base_price) }}</td>
+                    <td>{{ formatHours(jobType.base_hours) }}</td>
+                    <td>
+                        <div class="color-display">
+                            <div 
+                                class="color-circle" 
+                                [style.background-color]="jobType.color_hex">
+                            </div>
+                            <span class="color-text">{{ jobType.color_hex }}</span>
+                        </div>
+                    </td>
+                    <td>{{ jobType.created_at | date: 'dd/MMM/YY hh:mm' }}</td>
+                    <td>
+                        <div class="action-buttons">
+                            <p-button 
+                                icon="pi pi-pencil" 
+                                [text]="true"
+                                severity="info"
+                                size="small"
+                                pTooltip="Edit Job Type"
+                                (click)="editJobType(jobType)">
+                            </p-button>
+                            <p-button 
+                                icon="pi pi-trash" 
+                                [text]="true"
+                                severity="danger"
+                                size="small"
+                                pTooltip="Delete Job Type"
+                                (click)="deleteJobType($event, jobType)">
+                            </p-button>
+                        </div>
+                    </td>
+                </tr>
+            </ng-template>
+        </p-table>
+    </p-panel>
+</div>
+
+<p-confirmdialog />
+<p-toast />

@@ -137,6 +137,51 @@
       </small>
     </div>
 
+    <!-- Job Type Field -->
+    <div class="field-row full-width">
+      <p-inputgroup>
+        <p-inputgroup-addon>
+          <i class="pi pi-briefcase"></i>
+        </p-inputgroup-addon>
+        <div style="flex: 1; width: 100%;">
+          <p-iftalabel style="width: 100%; display: block;">
+            <p-dropdown 
+              inputId="job_type"
+              formControlName="job_type"
+              [options]="jobTypes"
+              optionLabel="name"
+              placeholder="Select a job type..."
+              [style]="{ width: '100%' }"
+              [showClear]="true">
+              <ng-template let-jobType pTemplate="item">
+                <div class="job-type-option">
+                  <div 
+                    class="job-type-color" 
+                    [style.background-color]="jobType.color_hex">
+                  </div>
+                  <div class="job-type-info">
+                    <span class="job-type-name">{{ jobType.name }}</span>
+                    <span class="job-type-separator">•</span>
+                    <span class="job-type-details">{{ jobType.base_price | currency }} • {{ jobType.base_hours }}h</span>
+                  </div>
+                </div>
+              </ng-template>
+              <ng-template let-jobType pTemplate="selectedItem">
+                <div class="job-type-selected" *ngIf="jobType">
+                  <div 
+                    class="job-type-color" 
+                    [style.background-color]="jobType.color_hex">
+                  </div>
+                  <span>{{ jobType.name }}</span>
+                </div>
+              </ng-template>
+            </p-dropdown>
+            <label for="job_type">Job Type</label>
+          </p-iftalabel>
+        </div>
+      </p-inputgroup>
+    </div>
+
     <!-- Client and Status Fields -->
     <div class="field-row half-width">
       <div class="field-wrapper">
@@ -452,6 +497,138 @@
       icon="pi pi-check" 
       [disabled]="jobForm.invalid"
       (click)="saveJob($event)">
+    </button>
+  </ng-template>
+</p-dialog>
+
+<!-- JobType Dialog -->
+<p-dialog 
+  [header]="dialogState.config.title" 
+  [(visible)]="dialogState.visible"
+  [modal]="dialogState.config.modal"
+  [style]="{ width: dialogState.config.width }"
+  [closable]="dialogState.config.closable"
+  [dismissableMask]="dialogState.config.dismissableMask"
+  *ngIf="dialogState.type === 'jobType'">
+  
+  <form [formGroup]="jobTypeForm" class="dialog-content">
+    <!-- Name Field -->
+    <div class="field-row full-width">
+      <p-inputgroup>
+        <p-inputgroup-addon>
+          <i class="pi pi-briefcase"></i>
+        </p-inputgroup-addon>
+        <p-floatlabel variant="in">
+          <input 
+            pInputText 
+            id="jobTypeName" 
+            formControlName="name"
+            [class.ng-invalid]="isFieldInvalid(jobTypeForm, 'name')"
+          />
+          <label for="jobTypeName">Name *</label>
+        </p-floatlabel>
+      </p-inputgroup>
+      <small class="error-message" *ngIf="isFieldInvalid(jobTypeForm, 'name')">
+        {{ getFieldError(jobTypeForm, 'name') }}
+      </small>
+    </div>
+
+    <!-- Description Field -->
+    <div class="field-row full-width">
+      <p-inputgroup>
+        <p-inputgroup-addon>
+          <i class="pi pi-file-edit"></i>
+        </p-inputgroup-addon>
+        <p-floatlabel variant="in">
+          <textarea 
+            pTextarea 
+            id="jobTypeDescription" 
+            formControlName="description"
+            rows="3">
+          </textarea>
+          <label for="jobTypeDescription">Description</label>
+        </p-floatlabel>
+      </p-inputgroup>
+    </div>
+
+    <!-- Base Price and Base Hours Fields -->
+    <div class="field-row half-width">
+      <div class="field-wrapper">
+        <p-inputgroup>
+          <p-inputgroup-addon>
+            <i class="pi pi-dollar"></i>
+          </p-inputgroup-addon>
+          <p-floatlabel variant="in">
+            <p-inputnumber 
+              id="jobTypeBasePrice" 
+              formControlName="base_price"
+              mode="currency" 
+              currency="USD" 
+              locale="en-US"
+              [min]="0"
+              [class.ng-invalid]="isFieldInvalid(jobTypeForm, 'base_price')">
+            </p-inputnumber>
+            <label for="jobTypeBasePrice">Base Price *</label>
+          </p-floatlabel>
+        </p-inputgroup>
+        <small class="error-message" *ngIf="isFieldInvalid(jobTypeForm, 'base_price')">
+          {{ getFieldError(jobTypeForm, 'base_price') }}
+        </small>
+      </div>
+
+      <div class="field-wrapper">
+        <p-inputgroup>
+          <p-inputgroup-addon>
+            <i class="pi pi-clock"></i>
+          </p-inputgroup-addon>
+          <p-floatlabel variant="in">
+            <p-inputnumber 
+              id="jobTypeBaseHours" 
+              formControlName="base_hours"
+              [min]="0.1" 
+              [step]="0.5"
+              [class.ng-invalid]="isFieldInvalid(jobTypeForm, 'base_hours')">
+            </p-inputnumber>
+            <label for="jobTypeBaseHours">Base Hours *</label>
+          </p-floatlabel>
+        </p-inputgroup>
+        <small class="error-message" *ngIf="isFieldInvalid(jobTypeForm, 'base_hours')">
+          {{ getFieldError(jobTypeForm, 'base_hours') }}
+        </small>
+      </div>
+    </div>
+
+    <!-- Color Field -->
+    <div class="field-row full-width">
+      <p-inputgroup>
+        <p-inputgroup-addon>
+          <i class="pi pi-palette"></i>
+        </p-inputgroup-addon>
+        <p-floatlabel variant="in">
+          <p-colorpicker 
+            id="jobTypeColor" 
+            formControlName="color_hex"
+            format="hex">
+          </p-colorpicker>
+          <label for="jobTypeColor">Color *</label>
+        </p-floatlabel>
+      </p-inputgroup>
+      <small class="error-message" *ngIf="isFieldInvalid(jobTypeForm, 'color_hex')">
+        {{ getFieldError(jobTypeForm, 'color_hex') }}
+      </small>
+    </div>
+  </form>
+
+  <ng-template pTemplate="footer">
+    <button pButton type="button" severity="secondary" label="Cancel" icon="pi pi-times" (click)="cancelDialog()"></button>
+    <button 
+      pButton 
+      type="button" 
+      severity="primary" 
+      label="Save" 
+      icon="pi pi-check" 
+      [disabled]="jobTypeForm.invalid"
+      (click)="saveJobType($event)">
     </button>
   </ng-template>
 </p-dialog>

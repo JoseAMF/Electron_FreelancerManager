@@ -20,6 +20,11 @@ export interface JobDialogData {
   isEdit?: boolean;
 }
 
+export interface JobTypeDialogData {
+  jobType?: any;
+  isEdit?: boolean;
+}
+
 export interface PomodoroDialogData {
   // No specific data needed since config is handled by ConfigService
 }
@@ -41,7 +46,7 @@ export interface DialogResult<T = any> {
 }
 
 export interface DialogState {
-  type: 'client' | 'job' | 'pomodoro' | null;
+  type: 'client' | 'job' | 'jobType' | 'pomodoro' | null;
   visible: boolean;
   config: DialogConfig;
   data: any;
@@ -95,6 +100,27 @@ export class DialogService {
 
       this.dialogState.next({
         type: 'job',
+        visible: true,
+        config: defaultConfig,
+        data,
+        resolve
+      });
+    });
+  }
+
+  openJobTypeDialog(data: JobTypeDialogData = {}, config: Partial<DialogConfig> = {}): Promise<DialogResult> {
+    return new Promise((resolve) => {
+      const defaultConfig: DialogConfig = {
+        title: data.isEdit ? 'Edit Job Type' : 'Add Job Type',
+        width: '50vw',
+        modal: true,
+        closable: false,
+        dismissableMask: true,
+        ...config
+      };
+
+      this.dialogState.next({
+        type: 'jobType',
         visible: true,
         config: defaultConfig,
         data,

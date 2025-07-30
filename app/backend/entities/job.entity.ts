@@ -1,6 +1,7 @@
 import { Entity, Column, ManyToOne, OneToMany, JoinColumn } from 'typeorm';
 import { BaseEntity } from "./base.entity";
 import { Client } from "./client.entity";
+import { JobType } from "./job-type.entity";
 import { Status } from "./status.enum";
 import { Payment } from "./payment.entity";
 import { Attachment } from "./attachment.entity";
@@ -16,6 +17,10 @@ export class Job extends BaseEntity {
     @ManyToOne(() => Client, client => client.jobs, { nullable: true })
     @JoinColumn({ name: 'client_id' })
     client?: Client;
+
+    @ManyToOne(() => JobType, jobType => jobType.jobs, { nullable: true })
+    @JoinColumn({ name: 'job_type_id' })
+    job_type?: JobType;
 
     @Column({ nullable: true, type: 'decimal', precision: 10, scale: 2 })
     price?: number;

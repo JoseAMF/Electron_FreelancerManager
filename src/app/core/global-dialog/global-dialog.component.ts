@@ -16,6 +16,7 @@ import { DropdownModule } from 'primeng/dropdown';
 import { TextareaModule } from 'primeng/textarea';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { DatePickerModule } from 'primeng/datepicker';
+import { ColorPickerModule } from 'primeng/colorpicker';
 import { ConfirmDialog } from 'primeng/confirmdialog';
 import { ToastModule } from 'primeng/toast';
 import { AccordionModule } from 'primeng/accordion';
@@ -24,8 +25,9 @@ import { BadgeModule } from 'primeng/badge';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { FileItem, FileUploaderComponent } from '../../shared/components/file-uploader/file-uploader.component';
 import { Client, Attachment, Payment } from '../../../../app/backend/entities';
+import { JobType } from '../../shared/types/entities';
 import { DialogState, DialogService, PomodoroSession } from '../dialog.service';
-import { ClientService, JobService, AttachmentService, PomodoroService, PaymentService } from '../services';
+import { ClientService, JobService, JobTypeService, AttachmentService, PomodoroService, PaymentService } from '../services';
 import { PomodoroConfig } from '../services/pomodoro.service';
 import { DateUtils } from '../utils';
 
@@ -51,6 +53,7 @@ import { DateUtils } from '../utils';
     DatePickerModule,
     ConfirmDialog,
     ToastModule,
+    ColorPickerModule,
     FileUploaderComponent,
     AccordionModule,
     CheckboxModule,
@@ -73,6 +76,7 @@ export class GlobalDialogsComponent implements OnInit, OnDestroy {
   // Forms
   clientForm: FormGroup;
   jobForm: FormGroup;
+  jobTypeForm: FormGroup;
   pomodoroConfigForm: FormGroup;
   paymentForm: FormGroup;
 
@@ -83,6 +87,7 @@ export class GlobalDialogsComponent implements OnInit, OnDestroy {
 
   // Data
   clients: Client[] = [];
+  jobTypes: JobType[] = [];
   filteredClients: Client[] = [];
   selectedFiles: FileItem[] = [];
   selectedPaymentFiles: FileItem[] = [];
@@ -105,6 +110,7 @@ export class GlobalDialogsComponent implements OnInit, OnDestroy {
     private dialogService: DialogService,
     private clientService: ClientService,
     private jobService: JobService,
+    private jobTypeService: JobTypeService,
     private attachmentService: AttachmentService,
     private paymentService: PaymentService,
     private pomodoroService: PomodoroService,
@@ -114,6 +120,7 @@ export class GlobalDialogsComponent implements OnInit, OnDestroy {
   ) {
     this.clientForm = this.createClientForm();
     this.jobForm = this.createJobForm();
+    this.jobTypeForm = this.createJobTypeForm();
     this.pomodoroConfigForm = this.createPomodoroConfigForm();
     this.paymentForm = this.createPaymentForm();
   }
@@ -148,6 +155,7 @@ export class GlobalDialogsComponent implements OnInit, OnDestroy {
       });
 
     this.loadClients();
+    this.loadJobTypes();
   }
 
   ngOnDestroy() {
@@ -160,6 +168,8 @@ export class GlobalDialogsComponent implements OnInit, OnDestroy {
       this.initializeClientDialog();
     } else if (state.type === 'job') {
       await this.initializeJobDialog();
+    } else if (state.type === 'jobType') {
+      await this.initializeJobTypeDialog();
     } else if (state.type === 'pomodoro') {
       this.initializePomodoroDialog();
     }
@@ -191,6 +201,7 @@ export class GlobalDialogsComponent implements OnInit, OnDestroy {
         status: jobData.job.status,
         price: jobData.job.price,
         client: jobData.job.client,
+        job_type: jobData.job.job_type,
         due_date: DateUtils.parseStringToDate(jobData.job.due_date!)
       });
       await this.loadJobAttachments(jobData.job.id!);
@@ -213,6 +224,27 @@ export class GlobalDialogsComponent implements OnInit, OnDestroy {
     this.updatePomodoroConfigForm(this.currentConfig);
   }
 
+  private async initializeJobTypeDialog() {
+    const jobTypeData = this.dialogState.data;
+    if (jobTypeData?.jobType) {
+      // Edit mode
+      this.jobTypeForm.patchValue({
+        name: jobTypeData.jobType.name,
+        description: jobTypeData.jobType.description || '',
+        base_price: jobTypeData.jobType.base_price,
+        base_hours: jobTypeData.jobType.base_hours,
+        color_hex: jobTypeData.jobType.color_hex
+      });
+    } else {
+      // Add mode
+      this.jobTypeForm.reset({
+        base_price: 0,
+        base_hours: 1,
+        color_hex: '#3B82F6'
+      });
+    }
+  }
+
   // Form Creation
   private createClientForm(): FormGroup {
     return this.fb.group({
@@ -230,7 +262,18 @@ export class GlobalDialogsComponent implements OnInit, OnDestroy {
       status: ['pending', [Validators.required]],
       price: [0, [Validators.required, Validators.min(0)]],
       client: [null, [Validators.required]],
+      job_type: [null],
       due_date: [null, [Validators.required]]
+    });
+  }
+
+  private createJobTypeForm(): FormGroup {
+    return this.fb.group({
+      name: ['', [Validators.required, Validators.minLength(2)]],
+      description: [''],
+      base_price: [0, [Validators.required, Validators.min(0)]],
+      base_hours: [1, [Validators.required, Validators.min(0.1)]],
+      color_hex: ['#3B82F6', [Validators.required]]
     });
   }
 
@@ -266,6 +309,14 @@ export class GlobalDialogsComponent implements OnInit, OnDestroy {
       this.clients = await this.clientService.getAllClients();
     } catch (error) {
       console.error('Error loading clients:', error);
+    }
+  }
+
+  private async loadJobTypes() {
+    try {
+      this.jobTypes = await this.jobTypeService.getAllJobTypes();
+    } catch (error) {
+      console.error('Error loading job types:', error);
     }
   }
 
@@ -378,6 +429,7 @@ export class GlobalDialogsComponent implements OnInit, OnDestroy {
         try {
           let formData = this.jobForm.value;
           formData.client_id = formData.client?.id;
+          formData.job_type_id = formData.job_type?.id;
           
           // Handle completion date based on status
           const currentStatus = formData.status;
@@ -426,6 +478,64 @@ export class GlobalDialogsComponent implements OnInit, OnDestroy {
             severity: 'error',
             summary: 'Error',
             detail: `Failed to ${isEdit ? 'update' : 'create'} job`
+          });
+        }
+      }
+    });
+  }
+
+  // JobType Actions
+  saveJobType(event: Event) {
+    if (this.jobTypeForm.invalid) {
+      this.markFormGroupTouched(this.jobTypeForm);
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Validation Error',
+        detail: 'Please fill in all required fields correctly'
+      });
+      return;
+    }
+
+    const isEdit = this.dialogState.data?.jobType;
+    
+    this.confirmationService.confirm({
+      target: event.target as EventTarget,
+      message: `Are you sure that you want to ${isEdit ? 'edit' : 'add'} this job type?`,
+      header: `${isEdit ? 'Edit' : 'Add'} Job Type`,
+      icon: 'pi pi-exclamation-triangle',
+      rejectButtonProps: {
+        label: 'Cancel',
+        severity: 'danger',
+        outlined: true,
+      },
+      acceptButtonProps: {
+        label: 'Save',
+        severity: 'success',
+      },
+      accept: async () => {
+        try {
+          const formData = this.jobTypeForm.value;
+          let result;
+
+          if (isEdit) {
+            result = await this.jobTypeService.updateJobType(this.dialogState.data.jobType.id, formData);
+          } else {
+            result = await this.jobTypeService.createJobType(formData);
+          }
+
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Success',
+            detail: `Job type ${isEdit ? 'updated' : 'created'} successfully`
+          });
+
+          await this.loadJobTypes(); // Refresh the job types list
+          this.dialogService.closeDialog({ success: true, data: result });
+        } catch (error: any) {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: error.message || `Failed to ${isEdit ? 'update' : 'create'} job type`
           });
         }
       }

@@ -68,7 +68,7 @@ class JobService {
     getAllJobs() {
         return __awaiter(this, void 0, void 0, function* () {
             return yield this.jobRepository.find({
-                relations: ['client'],
+                relations: ['client', 'job_type'],
                 order: { created_at: 'DESC' }
             });
         });
@@ -77,7 +77,7 @@ class JobService {
         return __awaiter(this, void 0, void 0, function* () {
             return yield this.jobRepository.findOne({
                 where: { id },
-                relations: ['client']
+                relations: ['client', 'job_type']
             });
         });
     }
@@ -85,7 +85,7 @@ class JobService {
         return __awaiter(this, void 0, void 0, function* () {
             return yield this.jobRepository.find({
                 where: { client: { id: clientId } },
-                relations: ['client'],
+                relations: ['client', 'job_type'],
                 order: { created_at: 'DESC' }
             });
         });
@@ -94,7 +94,7 @@ class JobService {
         return __awaiter(this, void 0, void 0, function* () {
             return yield this.jobRepository.find({
                 where: { status },
-                relations: ['client'],
+                relations: ['client', 'job_type'],
                 order: { created_at: 'DESC' }
             });
         });
@@ -103,7 +103,8 @@ class JobService {
         return __awaiter(this, void 0, void 0, function* () {
             const queryBuilder = this.jobRepository
                 .createQueryBuilder('job')
-                .leftJoinAndSelect('job.client', 'client');
+                .leftJoinAndSelect('job.client', 'client')
+                .leftJoinAndSelect('job.job_type', 'job_type');
             // Convert dates to DD/MM/YYYY strings for database comparison
             const startDateString = this.dateToString(startDate);
             const endDateString = endDate ? this.dateToString(endDate) : startDateString;
@@ -265,6 +266,7 @@ class JobService {
             return yield this.jobRepository
                 .createQueryBuilder('job')
                 .leftJoinAndSelect('job.client', 'client')
+                .leftJoinAndSelect('job.job_type', 'job_type')
                 .where('job.title LIKE :search OR job.description LIKE :search OR client.name LIKE :search', {
                 search: `%${searchTerm}%`
             })

@@ -13,6 +13,7 @@ exports.Job = void 0;
 const typeorm_1 = require("typeorm");
 const base_entity_1 = require("./base.entity");
 const client_entity_1 = require("./client.entity");
+const job_type_entity_1 = require("./job-type.entity");
 const status_enum_1 = require("./status.enum");
 const payment_entity_1 = require("./payment.entity");
 const attachment_entity_1 = require("./attachment.entity");
@@ -32,6 +33,11 @@ __decorate([
     (0, typeorm_1.JoinColumn)({ name: 'client_id' }),
     __metadata("design:type", client_entity_1.Client)
 ], Job.prototype, "client", void 0);
+__decorate([
+    (0, typeorm_1.ManyToOne)(() => job_type_entity_1.JobType, jobType => jobType.jobs, { nullable: true }),
+    (0, typeorm_1.JoinColumn)({ name: 'job_type_id' }),
+    __metadata("design:type", job_type_entity_1.JobType)
+], Job.prototype, "job_type", void 0);
 __decorate([
     (0, typeorm_1.Column)({ nullable: true, type: 'decimal', precision: 10, scale: 2 }),
     __metadata("design:type", Number)

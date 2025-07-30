@@ -458,3 +458,79 @@ p-tag {
   padding: 2rem;
   color: var(--text-color-secondary);
 }
+
+// Job Type dropdown styles - REMOVED DUPLICATES
+
+// Job Type Dropdown Styling
+:deep(.p-dropdown-item) {
+  white-space: nowrap !important;
+  overflow: hidden !important;
+}
+
+:deep(.p-dropdown-items-wrapper) {
+  white-space: nowrap !important;
+}
+
+.job-type-option {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.75rem !important;
+  padding: 0.5rem 0 !important;
+  width: 100% !important;
+  white-space: nowrap !important;
+  
+  // Override any PrimeNG default styling
+  :deep(.p-dropdown-item) {
+    white-space: nowrap !important;
+  }
+}
+
+.job-type-color {
+  width: 16px;
+  height: 16px;
+  border-radius: 3px;
+  border: 1px solid var(--surface-border);
+  flex-shrink: 0;
+}
+
+.job-type-info {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.job-type-name {
+  font-weight: 500;
+  color: var(--text-color);
+  font-size: 0.9rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.job-type-separator {
+  color: var(--text-color-secondary);
+  font-size: 0.75rem;
+  margin: 0 0.25rem;
+}
+
+.job-type-details {
+  font-size: 0.75rem;
+  color: var(--text-color-secondary);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.job-type-selected {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.job-type-selected .job-type-color {
+  width: 14px;
+  height: 14px;
+}

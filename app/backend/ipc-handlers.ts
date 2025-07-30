@@ -1,11 +1,12 @@
 import { ipcMain, shell } from 'electron';
 import { OrmDatabaseService } from './database/orm-database.service';
-import { ClientService, JobService, AttachmentService, PaymentService, ConfigService } from './services';
+import { ClientService, JobService, JobTypeService, AttachmentService, PaymentService, ConfigService } from './services';
 import * as path from 'path';
 
 let dbService: OrmDatabaseService;
 let clientService: ClientService;
 let jobService: JobService;
+let jobTypeService: JobTypeService;
 let attachmentService: AttachmentService;
 let paymentService: PaymentService;
 let configService: ConfigService;
@@ -20,6 +21,7 @@ export function setupIpcHandlers(): void {
       // Initialize all services
       clientService = new ClientService(dbService);
       jobService = new JobService(dbService);
+      jobTypeService = new JobTypeService(dbService);
       attachmentService = new AttachmentService(dbService);
       paymentService = new PaymentService(dbService);
       configService = new ConfigService(dbService);
@@ -95,6 +97,31 @@ export function setupIpcHandlers(): void {
 
   ipcMain.handle('job:getStats', async () => {
     return await jobService.getJobStats();
+  });
+
+  // JobType handlers
+  ipcMain.handle('jobType:create', async (event, jobTypeData) => {
+    return await jobTypeService.createJobType(jobTypeData);
+  });
+
+  ipcMain.handle('jobType:getAll', async () => {
+    return await jobTypeService.getAllJobTypes();
+  });
+
+  ipcMain.handle('jobType:getById', async (event, id) => {
+    return await jobTypeService.getJobTypeById(id);
+  });
+
+  ipcMain.handle('jobType:update', async (event, id, updateData) => {
+    return await jobTypeService.updateJobType(id, updateData);
+  });
+
+  ipcMain.handle('jobType:delete', async (event, id) => {
+    return await jobTypeService.deleteJobType(id);
+  });
+
+  ipcMain.handle('jobType:search', async (event, searchTerm) => {
+    return await jobTypeService.searchJobTypes(searchTerm);
   });
 
   // Date-filtered job handlers

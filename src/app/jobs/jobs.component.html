@@ -17,6 +17,7 @@
                 <tr>
                     <th pSortableColumn="title">Title <p-sortIcon field="title" /></th>
                     <th>Client</th>
+                    <th>Job Type</th>
                     <th pSortableColumn="status">Status <p-sortIcon field="status" /></th>
                     <th pSortableColumn="price">Price <p-sortIcon field="price" /></th>
                     <th pSortableColumn="due_date">Due Date <p-sortIcon field="due_date" /></th>
@@ -29,6 +30,16 @@
                 <tr>
                     <td>{{ job.title }}</td>
                     <td>{{ getClientName(job.client_id || job.client?.id) }}</td>
+                    <td>
+                        <div class="job-type-display" *ngIf="job.job_type">
+                            <div 
+                                class="job-type-color" 
+                                [style.background-color]="job.job_type.color_hex">
+                            </div>
+                            <span>{{ job.job_type.name }}</span>
+                        </div>
+                        <span *ngIf="!job.job_type">-</span>
+                    </td>
                     <td>
                         <p-tag 
                             [value]="job.status" 

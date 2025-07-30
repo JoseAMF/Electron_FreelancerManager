@@ -16,6 +16,7 @@ const services_1 = require("./services");
 let dbService;
 let clientService;
 let jobService;
+let jobTypeService;
 let attachmentService;
 let paymentService;
 let configService;
@@ -28,6 +29,7 @@ function setupIpcHandlers() {
             // Initialize all services
             clientService = new services_1.ClientService(dbService);
             jobService = new services_1.JobService(dbService);
+            jobTypeService = new services_1.JobTypeService(dbService);
             attachmentService = new services_1.AttachmentService(dbService);
             paymentService = new services_1.PaymentService(dbService);
             configService = new services_1.ConfigService(dbService);
@@ -87,6 +89,25 @@ function setupIpcHandlers() {
     }));
     electron_1.ipcMain.handle('job:getStats', () => __awaiter(this, void 0, void 0, function* () {
         return yield jobService.getJobStats();
+    }));
+    // JobType handlers
+    electron_1.ipcMain.handle('jobType:create', (event, jobTypeData) => __awaiter(this, void 0, void 0, function* () {
+        return yield jobTypeService.createJobType(jobTypeData);
+    }));
+    electron_1.ipcMain.handle('jobType:getAll', () => __awaiter(this, void 0, void 0, function* () {
+        return yield jobTypeService.getAllJobTypes();
+    }));
+    electron_1.ipcMain.handle('jobType:getById', (event, id) => __awaiter(this, void 0, void 0, function* () {
+        return yield jobTypeService.getJobTypeById(id);
+    }));
+    electron_1.ipcMain.handle('jobType:update', (event, id, updateData) => __awaiter(this, void 0, void 0, function* () {
+        return yield jobTypeService.updateJobType(id, updateData);
+    }));
+    electron_1.ipcMain.handle('jobType:delete', (event, id) => __awaiter(this, void 0, void 0, function* () {
+        return yield jobTypeService.deleteJobType(id);
+    }));
+    electron_1.ipcMain.handle('jobType:search', (event, searchTerm) => __awaiter(this, void 0, void 0, function* () {
+        return yield jobTypeService.searchJobTypes(searchTerm);
     }));
     // Date-filtered job handlers
     electron_1.ipcMain.handle('job:getByDateRange', (event, startDate, endDate, status) => __awaiter(this, void 0, void 0, function* () {

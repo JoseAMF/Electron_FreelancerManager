@@ -71,7 +71,7 @@ export class JobService {
 
   async getAllJobs(): Promise<Job[]> {
     return await this.jobRepository.find({
-      relations: ['client'],
+      relations: ['client', 'job_type'],
       order: { created_at: 'DESC' }
     });
   }
@@ -79,14 +79,14 @@ export class JobService {
   async getJobById(id: number): Promise<Job | null> {
     return await this.jobRepository.findOne({
       where: { id },
-      relations: ['client']
+      relations: ['client', 'job_type']
     });
   }
 
   async getJobsByClient(clientId: number): Promise<Job[]> {
     return await this.jobRepository.find({
       where: { client: { id: clientId } },
-      relations: ['client'],
+      relations: ['client', 'job_type'],
       order: { created_at: 'DESC' }
     });
   }
@@ -94,7 +94,7 @@ export class JobService {
   async getJobsByStatus(status: Status): Promise<Job[]> {
     return await this.jobRepository.find({
       where: { status },
-      relations: ['client'],
+      relations: ['client', 'job_type'],
       order: { created_at: 'DESC' }
     });
   }
@@ -102,7 +102,8 @@ export class JobService {
   async getJobsByDateRange(startDate: Date, endDate?: Date, status?: Status): Promise<Job[]> {
     const queryBuilder = this.jobRepository
       .createQueryBuilder('job')
-      .leftJoinAndSelect('job.client', 'client');
+      .leftJoinAndSelect('job.client', 'client')
+      .leftJoinAndSelect('job.job_type', 'job_type');
 
     // Convert dates to DD/MM/YYYY strings for database comparison
     const startDateString = this.dateToString(startDate);
@@ -262,6 +263,7 @@ export class JobService {
     return await this.jobRepository
       .createQueryBuilder('job')
       .leftJoinAndSelect('job.client', 'client')
+      .leftJoinAndSelect('job.job_type', 'job_type')
       .where('job.title LIKE :search OR job.description LIKE :search OR client.name LIKE :search', {
         search: `%${searchTerm}%`
       })

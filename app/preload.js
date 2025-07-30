@@ -27,6 +27,14 @@ const electronAPI = {
         // Date-filtered methods
         getByDateRange: (startDate, endDate, status) => electron_1.ipcRenderer.invoke('job:getByDateRange', startDate, endDate, status),
     },
+    jobType: {
+        create: (jobTypeData) => electron_1.ipcRenderer.invoke('jobType:create', jobTypeData),
+        getAll: () => electron_1.ipcRenderer.invoke('jobType:getAll'),
+        getById: (id) => electron_1.ipcRenderer.invoke('jobType:getById', id),
+        update: (id, updateData) => electron_1.ipcRenderer.invoke('jobType:update', id, updateData),
+        delete: (id) => electron_1.ipcRenderer.invoke('jobType:delete', id),
+        search: (searchTerm) => electron_1.ipcRenderer.invoke('jobType:search', searchTerm)
+    },
     attachment: {
         create: (attachmentData) => electron_1.ipcRenderer.invoke('attachment:create', attachmentData),
         getAll: () => electron_1.ipcRenderer.invoke('attachment:getAll'),

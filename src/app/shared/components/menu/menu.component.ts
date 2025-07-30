@@ -59,7 +59,18 @@ export class MenuComponent implements OnInit {
       {
         label: 'Jobs',
         icon: 'pi-briefcase',
-        routerLink: ['/jobs']
+        items: [
+          {
+            label: 'All Jobs',
+            icon: 'pi-list',
+            routerLink: ['/jobs']
+          },
+          {
+            label: 'Job Types',
+            icon: 'pi-tags',
+            routerLink: ['/job-types']
+          }
+        ]
       },
       {
         label: 'Payments',

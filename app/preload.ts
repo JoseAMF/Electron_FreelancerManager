@@ -30,6 +30,15 @@ const electronAPI = {
       ipcRenderer.invoke('job:getByDateRange', startDate, endDate, status),
   },
 
+  jobType: {
+    create: (jobTypeData: any) => ipcRenderer.invoke('jobType:create', jobTypeData),
+    getAll: () => ipcRenderer.invoke('jobType:getAll'),
+    getById: (id: number) => ipcRenderer.invoke('jobType:getById', id),
+    update: (id: number, updateData: any) => ipcRenderer.invoke('jobType:update', id, updateData),
+    delete: (id: number) => ipcRenderer.invoke('jobType:delete', id),
+    search: (searchTerm: string) => ipcRenderer.invoke('jobType:search', searchTerm)
+  },
+
   attachment: {
     create: (attachmentData: any) => ipcRenderer.invoke('attachment:create', attachmentData),
     getAll: () => ipcRenderer.invoke('attachment:getAll'),

@@ -23,6 +23,19 @@
   margin-right: 0;
 }
 
+.job-type-display {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.job-type-color {
+  width: 16px;
+  height: 16px;
+  border-radius: 3px;
+  border: 1px solid var(--surface-border);
+}
+
 // Dialog content styling
 .dialog-content {
   display: flex;

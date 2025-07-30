@@ -3,6 +3,7 @@ import * as path from 'path';
 import { app } from 'electron';
 import { Client } from '../entities/client.entity';
 import { Job } from '../entities/job.entity';
+import { JobType } from '../entities/job-type.entity';
 import { Attachment } from '../entities/attachment.entity';
 import { Payment } from '../entities/payment.entity';
 import { Config } from '../entities/config.entity';
@@ -18,7 +19,7 @@ export class OrmDatabaseService {
       this.dataSource = new DataSource({
         type: 'sqlite',
         database: dbPath,
-        entities: [Client, Job, Attachment, Payment, Config],
+        entities: [Client, Job, JobType, Attachment, Payment, Config],
         synchronize: true, // Auto-create tables in development
         logging: false
       });
@@ -44,6 +45,10 @@ export class OrmDatabaseService {
 
   getJobRepository(): Repository<Job> {
     return this.getDataSource().getRepository(Job);
+  }
+
+  getJobTypeRepository(): Repository<JobType> {
+    return this.getDataSource().getRepository(JobType);
   }
 
   getAttachmentRepository(): Repository<Attachment> {

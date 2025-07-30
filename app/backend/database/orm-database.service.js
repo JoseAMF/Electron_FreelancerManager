@@ -15,6 +15,7 @@ const path = require("path");
 const electron_1 = require("electron");
 const client_entity_1 = require("../entities/client.entity");
 const job_entity_1 = require("../entities/job.entity");
+const job_type_entity_1 = require("../entities/job-type.entity");
 const attachment_entity_1 = require("../entities/attachment.entity");
 const payment_entity_1 = require("../entities/payment.entity");
 const config_entity_1 = require("../entities/config.entity");
@@ -30,7 +31,7 @@ class OrmDatabaseService {
                 this.dataSource = new typeorm_1.DataSource({
                     type: 'sqlite',
                     database: dbPath,
-                    entities: [client_entity_1.Client, job_entity_1.Job, attachment_entity_1.Attachment, payment_entity_1.Payment, config_entity_1.Config],
+                    entities: [client_entity_1.Client, job_entity_1.Job, job_type_entity_1.JobType, attachment_entity_1.Attachment, payment_entity_1.Payment, config_entity_1.Config],
                     synchronize: true, // Auto-create tables in development
                     logging: false
                 });
@@ -54,6 +55,9 @@ class OrmDatabaseService {
     }
     getJobRepository() {
         return this.getDataSource().getRepository(job_entity_1.Job);
+    }
+    getJobTypeRepository() {
+        return this.getDataSource().getRepository(job_type_entity_1.JobType);
     }
     getAttachmentRepository() {
         return this.getDataSource().getRepository(attachment_entity_1.Attachment);
