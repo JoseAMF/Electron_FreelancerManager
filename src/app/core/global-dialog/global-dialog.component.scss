@@ -534,3 +534,72 @@ p-tag {
   width: 14px;
   height: 14px;
 }
+
+.payment-action-button {
+  min-height: 32px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  
+  &:hover:not([disabled]) {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  }
+  
+  &:active:not([disabled]) {
+    transform: translateY(0);
+  }
+  
+  &[disabled] {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+// Color field styling
+.color-field-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  
+  .color-field-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 500;
+    color: var(--text-color);
+    font-size: 0.875rem;
+    margin-bottom: 0.25rem;
+    
+    .color-icon {
+      color: var(--primary-color);
+      font-size: 1rem;
+    }
+    
+    .color-label {
+      margin: 0;
+    }
+  }
+  
+  p-colorpicker {
+    width: 100%;
+    
+    .p-colorpicker-input {
+      width: 100% !important;
+      min-height: 2.75rem;
+      border: 1px solid var(--surface-border);
+      border-radius: var(--border-radius);
+      padding: 0.75rem;
+      font-size: 0.875rem;
+      transition: border-color 0.2s;
+      
+      &:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 1px var(--primary-color);
+      }
+      
+      &:hover {
+        border-color: var(--primary-color-text);
+      }
+    }
+  }
+}

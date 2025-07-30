@@ -31,6 +31,11 @@ import { ClientService, JobService, JobTypeService, AttachmentService, PomodoroS
 import { PomodoroConfig } from '../services/pomodoro.service';
 import { DateUtils } from '../utils';
 
+// Extended Payment type for handling pending file uploads
+interface PaymentWithFiles extends Payment {
+  pendingFiles?: FileItem[];
+}
+
 
 
 @Component({
@@ -92,11 +97,12 @@ export class GlobalDialogsComponent implements OnInit, OnDestroy {
   selectedFiles: FileItem[] = [];
   selectedPaymentFiles: FileItem[] = [];
   currentJobAttachments: Attachment[] = [];
-  currentJobPayments: Payment[] = [];
-  originalJobPayments: Payment[] = []; // Track original payments for deletion detection
+  currentJobPayments: PaymentWithFiles[] = [];
+  originalJobPayments: PaymentWithFiles[] = []; // Track original payments for deletion detection
   currentPaymentAttachments: Attachment[] = [];
   editingPaymentIndex: number = -1;
   showAddPaymentForm = false;
+  isProcessingPayment = false; // Add processing state
 
   // Options
   statusOptions = [
@@ -335,8 +341,8 @@ export class GlobalDialogsComponent implements OnInit, OnDestroy {
   private async loadJobPayments(jobId: number): Promise<void> {
     try {
       const payments = await this.paymentService.getPaymentsByJob(jobId);
-      this.currentJobPayments = payments;
-      this.originalJobPayments = [...payments]; // Keep a copy for deletion detection
+      this.currentJobPayments = payments.map(payment => ({ ...payment, pendingFiles: [] }));
+      this.originalJobPayments = this.currentJobPayments.map(payment => ({ ...payment })); // Keep a copy for deletion detection
     } catch (error) {
       console.error('Error loading job payments:', error);
       this.currentJobPayments = [];
@@ -568,84 +574,121 @@ export class GlobalDialogsComponent implements OnInit, OnDestroy {
     this.selectedPaymentFiles = files;
   }
 
+  get isPaymentFormValid(): boolean {
+    return this.paymentForm.valid;
+  }
+
+  get paymentButtonLabel(): string {
+    return this.editingPaymentIndex >= 0 ? 'Update Payment' : 'Add Payment';
+  }
+
   toggleAddPaymentForm() {
     this.showAddPaymentForm = true;
     this.editingPaymentIndex = -1;
-    this.resetPaymentForm();
+    this.paymentForm.reset({
+      amount: null,
+      payment_date: new Date(),
+      description: ''
+    });
+    this.currentPaymentAttachments = [];
+    this.selectedPaymentFiles = [];
+    
+    // Mark form as untouched and pristine
+    this.paymentForm.markAsUntouched();
+    this.paymentForm.markAsPristine();
+    
+    this.cdr.detectChanges(); // Force change detection
   }
 
   async addPayment() {
-    if (this.paymentForm.valid) {
-      const formValue = this.paymentForm.value;
-      
-      // Convert Date object to DD/MM/YYYY string format
-      let paymentDateString = '';
-      if (formValue.payment_date) {
-        if (formValue.payment_date instanceof Date) {
-          paymentDateString = this.formatDateToString(formValue.payment_date);
-        } else {
-          // Handle string dates
-          const date = new Date(formValue.payment_date);
-          paymentDateString = this.formatDateToString(date);
-        }
-      }
-
-      try {
-        if (this.editingPaymentIndex >= 0) {
-          // Update existing payment
-          const existingPayment = this.currentJobPayments[this.editingPaymentIndex];
-          existingPayment.amount = formValue.amount;
-          existingPayment.payment_date = paymentDateString;
-          existingPayment.description = formValue.description || '';
-          
-          this.messageService.add({
-            severity: 'success',
-            summary: 'Success',
-            detail: 'Payment updated successfully'
-          });
-        } else {
-          // Add new payment - create a proper Payment object
-          const newPayment: Payment = {
-            id: 0, // Temporary ID, will be set when saved to DB
-            amount: formValue.amount,
-            payment_date: paymentDateString,
-            description: formValue.description || '',
-            created_at: new Date(),
-            updated_at: new Date(),
-            attachments: []
-          } as Payment;
-
-          this.currentJobPayments.push(newPayment);
-          
-          this.messageService.add({
-            severity: 'success',
-            summary: 'Success',
-            detail: 'Payment added successfully'
-          });
-        }
-        
-        this.resetPaymentForm();
-        this.cdr.detectChanges(); // Force change detection
-      } catch (error) {
-        console.error('Payment operation error:', error);
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Error',
-          detail: 'Failed to save payment'
-        });
-      }
-    } else {
-      // Mark form as touched to show validation errors
+    // Check form validity first
+    if (this.paymentForm.invalid) {
       this.markFormGroupTouched(this.paymentForm);
       this.messageService.add({
         severity: 'warn',
         summary: 'Validation Error',
-        detail: 'Please fill in all required fields'
+        detail: 'Please fill in all required fields correctly'
       });
+      return;
+    }
+
+    // Set processing state
+    this.isProcessingPayment = true;
+    this.cdr.detectChanges();
+
+    const formValue = this.paymentForm.value;
+    
+    // Convert Date object to DD/MM/YYYY string format
+    let paymentDateString = '';
+    if (formValue.payment_date) {
+      if (formValue.payment_date instanceof Date) {
+        paymentDateString = this.formatDateToString(formValue.payment_date);
+      } else {
+        // Handle string dates
+        const date = new Date(formValue.payment_date);
+        paymentDateString = this.formatDateToString(date);
+      }
+    }
+
+    try {
+      if (this.editingPaymentIndex >= 0) {
+        // Update existing payment
+        const existingPayment = this.currentJobPayments[this.editingPaymentIndex];
+        existingPayment.amount = formValue.amount;
+        existingPayment.payment_date = paymentDateString;
+        existingPayment.description = formValue.description || '';
+        existingPayment.updated_at = new Date();
+        
+        // Store pending files for later upload
+        if (this.selectedPaymentFiles.length > 0) {
+          existingPayment.pendingFiles = [...this.selectedPaymentFiles];
+        }
+        
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Success',
+          detail: 'Payment updated successfully'
+        });
+      } else {
+        // Add new payment - create a proper Payment object
+        const newPayment: PaymentWithFiles = {
+          id: 0, // Temporary ID, will be set when saved to DB
+          amount: formValue.amount,
+          payment_date: paymentDateString,
+          description: formValue.description || '',
+          created_at: new Date(),
+          updated_at: new Date(),
+          attachments: [],
+          pendingFiles: this.selectedPaymentFiles.length > 0 ? [...this.selectedPaymentFiles] : [] // Store pending files
+        };
+
+        this.currentJobPayments.push(newPayment);
+        
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Success',
+          detail: 'Payment added successfully'
+        });
+      }
+      
+      // Reset form and close
+      this.resetPaymentForm();
+      
+    } catch (error) {
+      console.error('Payment operation error:', error);
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'Failed to save payment'
+      });
+    } finally {
+      // Reset processing state
+      this.isProcessingPayment = false;
+      this.cdr.detectChanges(); // Force change detection
     }
   }
 
-  editPayment(payment: Payment, index: number) {
+  editPayment(payment: PaymentWithFiles, index: number) {
     this.editingPaymentIndex = index;
     
     // Parse the date string properly
@@ -661,13 +704,18 @@ export class GlobalDialogsComponent implements OnInit, OnDestroy {
     });
     
     this.currentPaymentAttachments = payment.attachments || [];
-    this.selectedPaymentFiles = [];
+    this.selectedPaymentFiles = []; // Clear current selection to allow new files
     this.showAddPaymentForm = true;
+    
+    // Store pending files for this payment
+    if (payment.pendingFiles) {
+      this.selectedPaymentFiles = [...payment.pendingFiles];
+    }
     
     this.cdr.detectChanges(); // Force change detection
   }
 
-  deletePayment(payment: Payment, index: number) {
+  deletePayment(payment: PaymentWithFiles, index: number) {
     const attachmentCount = payment.attachments?.length || 0;
     const attachmentText = attachmentCount > 0 
       ? ` (including ${attachmentCount} attachment${attachmentCount === 1 ? '' : 's'})`
@@ -700,14 +748,23 @@ export class GlobalDialogsComponent implements OnInit, OnDestroy {
 
   cancelAddPayment() {
     this.resetPaymentForm();
+    this.cdr.detectChanges(); // Force change detection
   }
 
   private resetPaymentForm() {
-    this.paymentForm.reset();
+    this.paymentForm.reset({
+      amount: null,
+      payment_date: new Date(),
+      description: ''
+    });
     this.currentPaymentAttachments = [];
     this.selectedPaymentFiles = [];
     this.editingPaymentIndex = -1;
     this.showAddPaymentForm = false;
+    
+    // Mark form as untouched to clear any validation errors
+    this.paymentForm.markAsUntouched();
+    this.paymentForm.markAsPristine();
   }
 
   private async uploadPaymentFiles(paymentId: number, files: FileItem[]): Promise<void> {
@@ -783,9 +840,21 @@ export class GlobalDialogsComponent implements OnInit, OnDestroy {
             payment.id = savedPayment.id;
           }
           
-          // Upload payment files if any (for this specific payment during editing)
-          if (this.editingPaymentIndex === i && this.selectedPaymentFiles.length > 0 && savedPayment) {
-            await this.uploadPaymentFiles(savedPayment.id, this.selectedPaymentFiles);
+          // Upload payment files - check for pending files or current editing session
+          let filesToUpload: FileItem[] = [];
+          
+          if (this.editingPaymentIndex === i && this.selectedPaymentFiles.length > 0) {
+            // Files from current editing session
+            filesToUpload = this.selectedPaymentFiles;
+          } else if (payment.pendingFiles && payment.pendingFiles.length > 0) {
+            // Files from when payment was initially created
+            filesToUpload = payment.pendingFiles;
+          }
+          
+          if (filesToUpload.length > 0 && savedPayment) {
+            await this.uploadPaymentFiles(savedPayment.id, filesToUpload);
+            // Clear pending files after upload
+            delete payment.pendingFiles;
           }
         } catch (error) {
           console.error('Error saving payment:', error);

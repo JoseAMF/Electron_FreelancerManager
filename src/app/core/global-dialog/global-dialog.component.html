@@ -341,7 +341,7 @@
               <form [formGroup]="paymentForm" class="payment-form">
                 <div class="payment-fields">
                   <div class="field-wrapper">
-                    <p-floatlabel>
+                    <p-floatlabel variant="in">
                       <p-inputnumber
                         inputId="payment-amount"
                         formControlName="amount"
@@ -359,7 +359,7 @@
                   </div>
 
                   <div class="field-wrapper">
-                    <p-floatlabel>
+                    <p-floatlabel variant="in">
                       <p-datepicker 
                         inputId="payment-date" 
                         formControlName="payment_date"
@@ -376,7 +376,7 @@
                 </div>
 
                 <div class="field-wrapper full-width">
-                  <p-floatlabel>
+                  <p-floatlabel variant="in">
                     <textarea 
                       pInputTextarea
                       inputId="payment-description" 
@@ -411,11 +411,12 @@
                   <button 
                     pButton 
                     type="button" 
-                    label="Add Payment" 
+                    [label]="paymentButtonLabel"
                     severity="primary"
                     size="small"
-                    [disabled]="paymentForm.invalid"
-                    (click)="addPayment()">
+                    [disabled]="!isPaymentFormValid || isProcessingPayment"
+                    (click)="addPayment()"
+                    class="payment-action-button">
                   </button>
                 </div>
               </form>
@@ -511,25 +512,45 @@
   *ngIf="dialogState.type === 'jobType'">
   
   <form [formGroup]="jobTypeForm" class="dialog-content">
-    <!-- Name Field -->
-    <div class="field-row full-width">
-      <p-inputgroup>
-        <p-inputgroup-addon>
-          <i class="pi pi-briefcase"></i>
-        </p-inputgroup-addon>
-        <p-floatlabel variant="in">
-          <input 
-            pInputText 
-            id="jobTypeName" 
-            formControlName="name"
-            [class.ng-invalid]="isFieldInvalid(jobTypeForm, 'name')"
-          />
-          <label for="jobTypeName">Name *</label>
-        </p-floatlabel>
-      </p-inputgroup>
-      <small class="error-message" *ngIf="isFieldInvalid(jobTypeForm, 'name')">
-        {{ getFieldError(jobTypeForm, 'name') }}
-      </small>
+    <!-- Name and Color Fields -->
+    <div class="field-row" style="display: flex; gap: 1rem;">
+      <div class="field-wrapper" style="flex: 0 0 70%;">
+        <p-inputgroup>
+          <p-inputgroup-addon>
+            <i class="pi pi-briefcase"></i>
+          </p-inputgroup-addon>
+          <p-floatlabel variant="in">
+            <input 
+              pInputText 
+              id="jobTypeName" 
+              formControlName="name"
+              [class.ng-invalid]="isFieldInvalid(jobTypeForm, 'name')"
+            />
+            <label for="jobTypeName">Name *</label>
+          </p-floatlabel>
+        </p-inputgroup>
+        <small class="error-message" *ngIf="isFieldInvalid(jobTypeForm, 'name')">
+          {{ getFieldError(jobTypeForm, 'name') }}
+        </small>
+      </div>
+
+      <div class="field-wrapper" style="flex: 0 0 30%;">
+        <div class="color-field-wrapper">
+          <div class="color-field-header">
+            <i class="pi pi-palette color-icon"></i>
+            <span class="color-label">Color *</span>
+          </div>
+          <p-colorpicker 
+            id="jobTypeColor" 
+            formControlName="color_hex"
+            format="hex"
+            [style]="{ width: '100%' }">
+          </p-colorpicker>
+        </div>
+        <small class="error-message" *ngIf="isFieldInvalid(jobTypeForm, 'color_hex')">
+          {{ getFieldError(jobTypeForm, 'color_hex') }}
+        </small>
+      </div>
     </div>
 
     <!-- Description Field -->
@@ -543,7 +564,8 @@
             pTextarea 
             id="jobTypeDescription" 
             formControlName="description"
-            rows="3">
+            rows="3"
+            [style]="{ width: '100%' }">
           </textarea>
           <label for="jobTypeDescription">Description</label>
         </p-floatlabel>
@@ -595,26 +617,6 @@
           {{ getFieldError(jobTypeForm, 'base_hours') }}
         </small>
       </div>
-    </div>
-
-    <!-- Color Field -->
-    <div class="field-row full-width">
-      <p-inputgroup>
-        <p-inputgroup-addon>
-          <i class="pi pi-palette"></i>
-        </p-inputgroup-addon>
-        <p-floatlabel variant="in">
-          <p-colorpicker 
-            id="jobTypeColor" 
-            formControlName="color_hex"
-            format="hex">
-          </p-colorpicker>
-          <label for="jobTypeColor">Color *</label>
-        </p-floatlabel>
-      </p-inputgroup>
-      <small class="error-message" *ngIf="isFieldInvalid(jobTypeForm, 'color_hex')">
-        {{ getFieldError(jobTypeForm, 'color_hex') }}
-      </small>
     </div>
   </form>
 
