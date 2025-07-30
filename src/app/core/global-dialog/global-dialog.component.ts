@@ -93,6 +93,7 @@ export class GlobalDialogsComponent implements OnInit, OnDestroy {
   selectedPaymentFiles: FileItem[] = [];
   currentJobAttachments: Attachment[] = [];
   currentJobPayments: Payment[] = [];
+  originalJobPayments: Payment[] = []; // Track original payments for deletion detection
   currentPaymentAttachments: Attachment[] = [];
   editingPaymentIndex: number = -1;
   showAddPaymentForm = false;
@@ -212,6 +213,7 @@ export class GlobalDialogsComponent implements OnInit, OnDestroy {
       this.selectedFiles = [];
       this.currentJobAttachments = [];
       this.currentJobPayments = [];
+      this.originalJobPayments = [];
     }
     // Reset payment form
     this.resetPaymentForm();
@@ -294,7 +296,7 @@ export class GlobalDialogsComponent implements OnInit, OnDestroy {
   private createPaymentForm(): FormGroup {
     return this.fb.group({
       amount: [null, [Validators.required, Validators.min(0.01)]],
-      payment_date: ['', [Validators.required]],
+      payment_date: [new Date(), [Validators.required]],
       description: ['']
     });
   }
@@ -334,9 +336,11 @@ export class GlobalDialogsComponent implements OnInit, OnDestroy {
     try {
       const payments = await this.paymentService.getPaymentsByJob(jobId);
       this.currentJobPayments = payments;
+      this.originalJobPayments = [...payments]; // Keep a copy for deletion detection
     } catch (error) {
       console.error('Error loading job payments:', error);
       this.currentJobPayments = [];
+      this.originalJobPayments = [];
     }
   }
 
@@ -564,6 +568,12 @@ export class GlobalDialogsComponent implements OnInit, OnDestroy {
     this.selectedPaymentFiles = files;
   }
 
+  toggleAddPaymentForm() {
+    this.showAddPaymentForm = true;
+    this.editingPaymentIndex = -1;
+    this.resetPaymentForm();
+  }
+
   async addPayment() {
     if (this.paymentForm.valid) {
       const formValue = this.paymentForm.value;
@@ -574,7 +584,9 @@ export class GlobalDialogsComponent implements OnInit, OnDestroy {
         if (formValue.payment_date instanceof Date) {
           paymentDateString = this.formatDateToString(formValue.payment_date);
         } else {
-          paymentDateString = formValue.payment_date;
+          // Handle string dates
+          const date = new Date(formValue.payment_date);
+          paymentDateString = this.formatDateToString(date);
         }
       }
 
@@ -584,13 +596,7 @@ export class GlobalDialogsComponent implements OnInit, OnDestroy {
           const existingPayment = this.currentJobPayments[this.editingPaymentIndex];
           existingPayment.amount = formValue.amount;
           existingPayment.payment_date = paymentDateString;
-          existingPayment.description = formValue.description;
-          
-          // Handle file uploads for editing
-          if (this.selectedPaymentFiles.length > 0) {
-            // For now, just add to the attachments array - real upload happens when job is saved
-            existingPayment.attachments = existingPayment.attachments || [];
-          }
+          existingPayment.description = formValue.description || '';
           
           this.messageService.add({
             severity: 'success',
@@ -598,15 +604,18 @@ export class GlobalDialogsComponent implements OnInit, OnDestroy {
             detail: 'Payment updated successfully'
           });
         } else {
-          // Add new payment
-          const newPayment: Partial<Payment> = {
+          // Add new payment - create a proper Payment object
+          const newPayment: Payment = {
+            id: 0, // Temporary ID, will be set when saved to DB
             amount: formValue.amount,
             payment_date: paymentDateString,
-            description: formValue.description,
+            description: formValue.description || '',
+            created_at: new Date(),
+            updated_at: new Date(),
             attachments: []
-          };
+          } as Payment;
 
-          this.currentJobPayments.push(newPayment as Payment);
+          this.currentJobPayments.push(newPayment);
           
           this.messageService.add({
             severity: 'success',
@@ -616,40 +625,75 @@ export class GlobalDialogsComponent implements OnInit, OnDestroy {
         }
         
         this.resetPaymentForm();
+        this.cdr.detectChanges(); // Force change detection
       } catch (error) {
+        console.error('Payment operation error:', error);
         this.messageService.add({
           severity: 'error',
           summary: 'Error',
           detail: 'Failed to save payment'
         });
       }
+    } else {
+      // Mark form as touched to show validation errors
+      this.markFormGroupTouched(this.paymentForm);
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Validation Error',
+        detail: 'Please fill in all required fields'
+      });
     }
   }
 
   editPayment(payment: Payment, index: number) {
     this.editingPaymentIndex = index;
+    
+    // Parse the date string properly
+    let parsedDate: Date | null = null;
+    if (payment.payment_date) {
+      parsedDate = this.parseDateString(payment.payment_date);
+    }
+    
     this.paymentForm.patchValue({
       amount: payment.amount,
-      payment_date: this.parseDateString(payment.payment_date || ''),
-      description: payment.description
+      payment_date: parsedDate || new Date(),
+      description: payment.description || ''
     });
+    
     this.currentPaymentAttachments = payment.attachments || [];
     this.selectedPaymentFiles = [];
     this.showAddPaymentForm = true;
+    
+    this.cdr.detectChanges(); // Force change detection
   }
 
   deletePayment(payment: Payment, index: number) {
+    const attachmentCount = payment.attachments?.length || 0;
+    const attachmentText = attachmentCount > 0 
+      ? ` (including ${attachmentCount} attachment${attachmentCount === 1 ? '' : 's'})`
+      : '';
+    
     this.confirmationService.confirm({
-      message: `Are you sure you want to delete this payment of ${payment.amount}?`,
+      message: `Are you sure you want to delete this payment of $${payment.amount}${attachmentText}?`,
       header: 'Delete Payment',
       icon: 'pi pi-exclamation-triangle',
       accept: () => {
-        this.currentJobPayments.splice(index, 1);
-        this.messageService.add({
-          severity: 'success',
-          summary: 'Success',
-          detail: 'Payment deleted successfully'
-        });
+        try {
+          this.currentJobPayments.splice(index, 1);
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Success',
+            detail: 'Payment deleted successfully'
+          });
+          this.cdr.detectChanges(); // Force change detection
+        } catch (error) {
+          console.error('Error deleting payment:', error);
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'Failed to delete payment'
+          });
+        }
       }
     });
   }
@@ -682,48 +726,86 @@ export class GlobalDialogsComponent implements OnInit, OnDestroy {
   }
 
   private async saveJobPayments(jobId: number): Promise<void> {
-    for (let i = 0; i < this.currentJobPayments.length; i++) {
-      const payment = this.currentJobPayments[i];
-      try {
-        let savedPayment: Payment;
-        
-        if (payment.id) {
-          // Update existing payment
-          const updateData: Partial<Payment> = {
-            amount: payment.amount,
-            payment_date: payment.payment_date,
-            description: payment.description,
-            job: { id: jobId } as any // Set job relationship
-          };
-          const updated = await this.paymentService.updatePayment(payment.id, updateData);
-          if (updated) {
-            savedPayment = updated;
-          } else {
-            throw new Error('Failed to update payment');
+    try {
+      // Handle deleted payments
+      const currentPaymentIds = this.currentJobPayments.filter(p => p.id && p.id > 0).map(p => p.id);
+      const originalPaymentIds = this.originalJobPayments.filter(p => p.id && p.id > 0).map(p => p.id);
+      const deletedPaymentIds = originalPaymentIds.filter(id => !currentPaymentIds.includes(id));
+      
+      // Delete removed payments
+      for (const deletedId of deletedPaymentIds) {
+        try {
+          const deleted = await this.paymentService.deletePayment(deletedId!);
+          if (!deleted) {
+            console.warn('Failed to delete payment with ID:', deletedId);
           }
-        } else {
-          // Create new payment
-          const paymentData: Partial<Payment> = {
-            amount: payment.amount,
-            payment_date: payment.payment_date,
-            description: payment.description,
-            job: { id: jobId } as any // Set job relationship
-          };
-          savedPayment = await this.paymentService.createPayment(paymentData);
+        } catch (error) {
+          console.error('Error deleting payment:', error);
+          this.messageService.add({
+            severity: 'warn',
+            summary: 'Deletion Warning',
+            detail: 'Some payment deletions may have failed'
+          });
         }
-        
-        // Upload payment files if any (for this specific payment during editing)
-        if (this.editingPaymentIndex === i && this.selectedPaymentFiles.length > 0 && savedPayment) {
-          await this.uploadPaymentFiles(savedPayment.id, this.selectedPaymentFiles);
-        }
-      } catch (error) {
-        console.error('Error saving payment:', error);
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Payment Error',
-          detail: 'Some payments failed to save'
-        });
       }
+
+      // Save/update current payments
+      for (let i = 0; i < this.currentJobPayments.length; i++) {
+        const payment = this.currentJobPayments[i];
+        try {
+          let savedPayment: Payment;
+          
+          if (payment.id && payment.id > 0) {
+            // Update existing payment
+            const updateData: Partial<Payment> = {
+              amount: payment.amount,
+              payment_date: payment.payment_date,
+              description: payment.description,
+              job: { id: jobId } as any // Set job relationship
+            };
+            const updated = await this.paymentService.updatePayment(payment.id, updateData);
+            if (updated) {
+              savedPayment = updated;
+            } else {
+              throw new Error('Failed to update payment');
+            }
+          } else {
+            // Create new payment
+            const paymentData: Partial<Payment> = {
+              amount: payment.amount,
+              payment_date: payment.payment_date,
+              description: payment.description,
+              job: { id: jobId } as any // Set job relationship
+            };
+            savedPayment = await this.paymentService.createPayment(paymentData);
+            
+            // Update the local payment with the new ID
+            payment.id = savedPayment.id;
+          }
+          
+          // Upload payment files if any (for this specific payment during editing)
+          if (this.editingPaymentIndex === i && this.selectedPaymentFiles.length > 0 && savedPayment) {
+            await this.uploadPaymentFiles(savedPayment.id, this.selectedPaymentFiles);
+          }
+        } catch (error) {
+          console.error('Error saving payment:', error);
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Payment Error',
+            detail: 'Some payments failed to save'
+          });
+        }
+      }
+      
+      // Update the original payments list for future comparisons
+      this.originalJobPayments = [...this.currentJobPayments];
+    } catch (error) {
+      console.error('Error in saveJobPayments:', error);
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Payment Error',
+        detail: 'Failed to save payment changes'
+      });
     }
   }
 
@@ -880,18 +962,32 @@ export class GlobalDialogsComponent implements OnInit, OnDestroy {
   }
 
   private parseDateString(dateString: string): Date | null {
-    if (!dateString) return null;
+    if (!dateString || dateString.trim() === '') return null;
     
-    const parts = dateString.split('/');
-    if (parts.length !== 3) return null;
-    
-    const day = parseInt(parts[0], 10);
-    const month = parseInt(parts[1], 10) - 1; // Month is 0-indexed
-    const year = parseInt(parts[2], 10);
-    
-    // Handle 2-digit years
-    const fullYear = year < 50 ? 2000 + year : (year < 100 ? 1900 + year : year);
-    
-    return new Date(fullYear, month, day);
+    try {
+      // Handle DD/MM/YYYY format
+      const parts = dateString.split('/');
+      if (parts.length === 3) {
+        const day = parseInt(parts[0], 10);
+        const month = parseInt(parts[1], 10) - 1; // Month is 0-indexed
+        let year = parseInt(parts[2], 10);
+        
+        // Handle 2-digit years
+        if (year < 50) {
+          year += 2000;
+        } else if (year < 100) {
+          year += 1900;
+        }
+        
+        return new Date(year, month, day);
+      }
+      
+      // Fallback to standard Date parsing
+      const parsedDate = new Date(dateString);
+      return isNaN(parsedDate.getTime()) ? null : parsedDate;
+    } catch (error) {
+      console.error('Error parsing date string:', dateString, error);
+      return null;
+    }
   }
 }

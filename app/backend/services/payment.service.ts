@@ -1,12 +1,18 @@
 import { Repository } from 'typeorm';
 import { Payment } from '../entities/payment.entity';
+import { Attachment } from '../entities/attachment.entity';
+import { AttachmentService } from './attachment.service';
 import { OrmDatabaseService } from '../database/orm-database.service';
 
 export class PaymentService {
   private paymentRepository: Repository<Payment>;
+  private attachmentRepository: Repository<Attachment>;
+  private attachmentService: AttachmentService;
 
   constructor(private dbService: OrmDatabaseService) {
     this.paymentRepository = this.dbService.getDataSource().getRepository(Payment);
+    this.attachmentRepository = this.dbService.getDataSource().getRepository(Attachment);
+    this.attachmentService = new AttachmentService(dbService);
   }
 
   async createPayment(paymentData: Partial<Payment>): Promise<Payment> {
@@ -55,8 +61,29 @@ export class PaymentService {
   }
 
   async deletePayment(id: number): Promise<boolean> {
-    const result = await this.paymentRepository.delete(id);
-    return result.affected != undefined && result.affected > 0;
+    try {
+      // First, get all attachments associated with this payment
+      const attachments = await this.attachmentRepository.find({
+        where: { payment: { id } }
+      });
+
+      // Delete each attachment (this will handle both DB and file deletion)
+      for (const attachment of attachments) {
+        try {
+          await this.attachmentService.deleteAttachment(attachment.id);
+        } catch (error) {
+          console.error('Error deleting attachment:', error);
+          // Continue with other attachments even if one fails
+        }
+      }
+
+      // Then delete the payment
+      const result = await this.paymentRepository.delete(id);
+      return result.affected != undefined && result.affected > 0;
+    } catch (error) {
+      console.error('Error deleting payment:', error);
+      return false;
+    }
   }
 
   async getTotalPayments(): Promise<number> {

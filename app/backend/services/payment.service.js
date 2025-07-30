@@ -11,10 +11,14 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PaymentService = void 0;
 const payment_entity_1 = require("../entities/payment.entity");
+const attachment_entity_1 = require("../entities/attachment.entity");
+const attachment_service_1 = require("./attachment.service");
 class PaymentService {
     constructor(dbService) {
         this.dbService = dbService;
         this.paymentRepository = this.dbService.getDataSource().getRepository(payment_entity_1.Payment);
+        this.attachmentRepository = this.dbService.getDataSource().getRepository(attachment_entity_1.Attachment);
+        this.attachmentService = new attachment_service_1.AttachmentService(dbService);
     }
     createPayment(paymentData) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -69,8 +73,29 @@ class PaymentService {
     }
     deletePayment(id) {
         return __awaiter(this, void 0, void 0, function* () {
-            const result = yield this.paymentRepository.delete(id);
-            return result.affected != undefined && result.affected > 0;
+            try {
+                // First, get all attachments associated with this payment
+                const attachments = yield this.attachmentRepository.find({
+                    where: { payment: { id } }
+                });
+                // Delete each attachment (this will handle both DB and file deletion)
+                for (const attachment of attachments) {
+                    try {
+                        yield this.attachmentService.deleteAttachment(attachment.id);
+                    }
+                    catch (error) {
+                        console.error('Error deleting attachment:', error);
+                        // Continue with other attachments even if one fails
+                    }
+                }
+                // Then delete the payment
+                const result = yield this.paymentRepository.delete(id);
+                return result.affected != undefined && result.affected > 0;
+            }
+            catch (error) {
+                console.error('Error deleting payment:', error);
+                return false;
+            }
         });
     }
     getTotalPayments() {
